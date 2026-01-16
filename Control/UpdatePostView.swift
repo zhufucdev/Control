@@ -15,9 +15,7 @@ struct UpdatePostView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ShapeSelect(shape: maskBuffer, onSelect: { newMask in
-                maskBuffer = newMask
-            })
+            ShapeSelect(shape: $maskBuffer)
             #if os(macOS)
             .padding(.top)
             #endif
@@ -92,15 +90,14 @@ struct UpdatePostView: View {
 }
 
 fileprivate struct ShapeSelect: View {
-    let shape: OpenAPIClient.Shape
-    let onSelect: (OpenAPIClient.Shape) -> Void
+    @Binding var shape: OpenAPIClient.Shape
     @Environment(\.mainSiteUrl) var mainSiteUrl
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
                 ForEach(OpenAPIClient.Shape.allCases, id: \.rawValue) { shape in
                     Button {
-                        onSelect(shape)
+                        self.shape = shape
                     } label: {
                         HStack {
                             if self.shape == shape {
