@@ -7,8 +7,14 @@ struct SettingsView: View {
     @Binding var postAuthKey: String
     var body: some View {
         Section("Backend") {
-            TextField("Endpoint Base URL", text: $endpointBaseUrl)
             TextField("Main Site URL", text: $mainSiteUrl)
+            TextField("Endpoint Base URL", text: $endpointBaseUrl)
+                .onChange(of: mainSiteUrl) { oldValue, newValue in
+                    if !endpointBaseUrl.starts(with: oldValue) {
+                        return
+                    }
+                    endpointBaseUrl = newValue + endpointBaseUrl.trimmingPrefix(oldValue)
+                }
             SecureField("Post Authentication Key", text: $postAuthKey)
         }
     }
