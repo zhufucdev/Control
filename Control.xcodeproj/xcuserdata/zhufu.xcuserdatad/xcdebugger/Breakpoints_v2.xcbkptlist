@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "F0DEBB68-A7EF-4DCA-A11B-81E02F9F37CC"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "40D3A385-20E5-415A-9124-72DCA7808750"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "ApiClient/Sources/OpenAPIClient/Infrastructure/APIs.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "99"
+            endingLineNumber = "99"
+            landmarkName = "execute()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "40D3A385-20E5-415A-9124-72DCA7808750 - bd18617a99240793"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Swift.CheckedContinuation&lt;OpenAPIClient.Response&lt;&#x3c4;_0_0&gt;, Swift.Error&gt;) -&gt; () in closure #1 () async throws -&gt; OpenAPIClient.Response&lt;&#x3c4;_0_0&gt; in OpenAPIClient.RequestBuilder.execute() async throws(OpenAPIClient.ErrorResponse) -&gt; OpenAPIClient.Response&lt;&#x3c4;_0_0&gt;"
+                  moduleName = "Control.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/zhufu/Source/Swift/Control/ApiClient/Sources/OpenAPIClient/Infrastructure/APIs.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "99"
+                  endingLineNumber = "99">
+               </Location>
+               <Location
+                  uuid = "40D3A385-20E5-415A-9124-72DCA7808750 - c94888ff71d49c00"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 @Sendable (Swift.Result&lt;OpenAPIClient.Response&lt;&#x3c4;_0_0&gt;, OpenAPIClient.ErrorResponse&gt;) -&gt; () in closure #1 (Swift.CheckedContinuation&lt;OpenAPIClient.Response&lt;&#x3c4;_0_0&gt;, Swift.Error&gt;) -&gt; () in closure #1 () async throws -&gt; OpenAPIClient.Response&lt;&#x3c4;_0_0&gt; in OpenAPIClient.RequestBuilder.execute() async throws(OpenAPIClient.ErrorResponse) -&gt; OpenAPIClient.Response&lt;&#x3c4;_0_0&gt;"
+                  moduleName = "Control.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/zhufu/Source/Swift/Control/ApiClient/Sources/OpenAPIClient/Infrastructure/APIs.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "99"
+                  endingLineNumber = "99">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

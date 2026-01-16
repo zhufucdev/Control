@@ -1,44 +1,88 @@
-//
-//  ContentView.swift
-//  Control
-//
-//  Created by Steve Reed on 2026/1/16.
-//
-
-import SwiftUI
 import SwiftData
+import SwiftUI
+import OpenAPIClient
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @Query(sort: \CachedUpdatePost.created, order: .reverse) private var items: [CachedUpdatePost]
+    
+    @State var pullTrialId = 0
+    @State var errorAlertContent: String? = nil
 
     var body: some View {
         NavigationSplitView {
             List {
                 ForEach(items) { item in
                     NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
+                        UpdatePostView(model: item) {
+                            
+                        }
                     } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        Text(item.title)
                     }
                 }
                 .onDelete(perform: deleteItems)
             }
-#if os(macOS)
+            #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
+            #endif
             .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
+                #if os(iOS)
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
+                    }
+                #endif
                 ToolbarItem {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
             }
+            .task(id: pullTrialId) {
+                do {
+                    let posts = Set((try await DefaultAPI.updateListGet()).map(CachedUpdatePost.init))
+                    let diff = Diff(old: Set(items), new: posts)
+                    DispatchQueue.main.async {
+                        for removal in diff.removal {
+                            if removal.id >= 0 {
+                                modelContext.delete(removal)
+                            }
+                        }
+                        for addition in diff.addition {
+                            modelContext.insert(addition)
+                        }
+                    }
+                } catch ErrorResponse.error(let status, let body, let response, let error) {
+                    if let body = body, response?.mimeType == "plain/text" {
+                        errorAlertContent = String(data: body, encoding: .utf8)
+                    } else {
+                        errorAlertContent = error.localizedDescription
+                    }
+                    print("Update post pulling encountered HTTP \(status)")
+                } catch {
+                    // shouldn't happen
+                    print(error)
+                }
+            }
+            .alert("Could not pull update posts", isPresented: Binding(get: {
+                errorAlertContent != nil
+            }, set: { newValue in
+                if !newValue {
+                    errorAlertContent = nil
+                }
+            }), actions: {
+                Button(role: .cancel) {
+                    errorAlertContent = nil
+                }
+                Button("Retry") {
+                    pullTrialId += 1
+                    errorAlertContent = nil
+                }
+            }, message: {
+                if let content = errorAlertContent {
+                    Text(content)
+                }
+            })
         } detail: {
             Text("Select an item")
         }
@@ -46,7 +90,7 @@ struct ContentView: View {
 
     private func addItem() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
+            let newItem = CachedUpdatePost()
             modelContext.insert(newItem)
         }
     }
@@ -62,5 +106,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+        .modelContainer(for: CachedUpdatePost.self, inMemory: true)
+        .modelContainer(for: CachedGalleryItem.self, inMemory: true)
 }

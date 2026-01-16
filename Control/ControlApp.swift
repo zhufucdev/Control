@@ -1,18 +1,19 @@
-//
-//  ControlApp.swift
-//  Control
-//
-//  Created by Steve Reed on 2026/1/16.
-//
-
 import SwiftUI
+import SDWebImageSVGCoder
 import SwiftData
+import OpenAPIClient
+import SDWebImage
 
 @main
 struct ControlApp: App {
+    init() {
+        SDImageCodersManager.shared.addCoder(SDImageSVGCoder.shared)
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            CachedGalleryItem.self,
+            CachedUpdatePost.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,11 +23,121 @@ struct ControlApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    @AppStorage(UserDefaultsKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultApiEndpoint
+    @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
+    @State var appState: ControlAppState = .locked
+    
+    func onInitialzie() {
+        Task {
+            do {
+                let key = try await Credentials.default.postAuthKey
+                let endpoint = endpointBaseUrl
+                if let key = key {
+                    OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpoint, postAuthKey: key)
+                    withAnimation {
+                        appState = .ready(endpointBaseUrl: endpoint, postAuthKey: key, mainSiteUrl: mainSiteUrl)
+                    }
+                } else {
+                    appState = .uninitialized
+                }
+            } catch is CredentialAccessDenialError {
+                appState = .locked
+            }
+        }
+    }
+    
+    func onLandingSubmitted(submission: Submission) {
+        Task(priority: .high) {
+            try? await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
+            OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
+            await withTaskGroup { tg in
+                tg.addTask {
+                    do {
+                        let gallery = try await DefaultAPI.galleryListGet()
+                        DispatchQueue.main.async {
+                            for item in gallery {
+                                sharedModelContainer.mainContext.insert(CachedGalleryItem(from: item))
+                            }
+                        }
+                    } catch {
+                        // TODO: show a message
+                    }
+                }
+                tg.addTask {
+                    do {
+                        let posts = try await DefaultAPI.updateListGet()
+                        DispatchQueue.main.async {
+                            for post in posts {
+                                sharedModelContainer.mainContext.insert(CachedUpdatePost(from: post))
+                            }
+                        }
+                    } catch {
+                        // TODO: show a message
+                    }
+                }
 
+                await tg.waitForAll()
+            }
+            appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
+        }
+    }
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            switch appState {
+            case .locked:
+                LockedView(unlock: {
+                    onInitialzie()
+                })
+                .onAppear {
+                    onInitialzie()
+                }
+            case .uninitialized:
+                LandingView(onSubmit: onLandingSubmitted)
+            case .ready(let endpoint, let postAuthKey, let mainSite):
+                ContentView()
+                    .environment(\.postAuthKey, postAuthKey)
+                    .environment(\.endpointBaseUrl, endpoint)
+                    .environment(\.mainSiteUrl, mainSite)
+                    .modelContainer(sharedModelContainer)
+            }
         }
-        .modelContainer(sharedModelContainer)
+        
+        #if os(macOS)
+        Settings {
+            Form {
+                SettingsView(endpointBaseUrl: $endpointBaseUrl, mainSiteUrl: $mainSiteUrl, postAuthKey: Binding(get: {
+                    appState.postAuthKey ?? ""
+                }, set: { newValue in
+                    // TODO: implement this
+                }))
+                .onDisappear {
+                    onLandingSubmitted(submission: .init(endpoint: endpointBaseUrl, postAuthKey: appState.postAuthKey ?? "", mainSiteUrl: mainSiteUrl))
+                }
+            }
+            .frame(maxWidth: 600)
+            .padding()
+        }
+        #endif
+    }
+}
+
+enum ControlAppState {
+    case locked
+    case uninitialized
+    case ready(endpointBaseUrl: String, postAuthKey: String, mainSiteUrl: String)
+}
+
+extension ControlAppState {
+    var postAuthKey: String? {
+        switch self {
+        case .locked:
+            fallthrough
+        case .uninitialized:
+            return nil
+        case .ready(_, let postAuthKey, _):
+            return postAuthKey
+        }
     }
 }
