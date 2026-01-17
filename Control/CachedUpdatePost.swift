@@ -27,7 +27,7 @@ final class CachedUpdatePost {
     }
     
     convenience init(from: UpdatePost) {
-        self.init(id: from.id, created: from.created, title: from.title, summary: from.summary, cover: from.cover, mask: from.mask, locale: from.locale, trashed: from.trashed)
+        self.init(id: from.id, created: from.created, header: from.header, title: from.title, summary: from.summary, cover: from.cover, mask: from.mask, locale: from.locale, trashed: from.trashed)
     }
     
     convenience init() {
