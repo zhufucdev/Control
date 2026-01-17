@@ -17,28 +17,36 @@ struct UpdatePostView: View {
     @StateObject private var templateCache = TemplateCache()
 
     var body: some View {
-        switch viewModel.state {
-        case let .editor(editor):
-            Editor(editor: editor, model: model, takePhoto: viewModel.openCameraForCapture, onSave: onSave)
-                .transition(.flipFromTop)
-                .environmentObject(templateCache)
-        case let .camera(onCapture, onCancel):
-            #if os(iOS)
-                CameraView { captured in
-                    switch captured {
-                    case .none:
-                        onCancel()
-                    case let .some(image):
-                        onCapture(image.cgImage!)
+        Group {
+            switch viewModel.state {
+            case let .editor(editor):
+                Editor(editor: editor, model: model, takePhoto: viewModel.openCameraForCapture, onSave: onSave)
+                    .transition(.flipFromTop)
+                    .environmentObject(templateCache)
+            case let .camera(onCapture, onCancel):
+                #if os(iOS)
+                    CameraView { captured in
+                        switch captured {
+                        case .none:
+                            onCancel()
+                        case let .some(image):
+                            onCapture(image.cgImage!)
+                        }
                     }
-                }
-                .ignoresSafeArea()
-                .transition(.flipFromBottom)
-                .navigationBarBackButtonHidden()
-            #else
-                Text("This platform does not support photo captrue")
-            #endif
+                    .ignoresSafeArea()
+                    .transition(.flipFromBottom)
+                    .navigationBarBackButtonHidden()
+                #else
+                    Text("This platform does not support photo captrue")
+                #endif
+            }
         }
+        .onAppear {
+            viewModel.editor.copyFrom(model: model)
+        }
+        .onChange(of: model, { _, newValue in
+            viewModel.editor.copyFrom(model: newValue)
+        })
     }
 }
 
