@@ -106,12 +106,6 @@ fileprivate struct Editor: View {
             }
         }
         .scrollDismissesKeyboard(.immediately)
-        .onAppear {
-            editor.copyFrom(model: model)
-        }
-        .onChange(of: model, { _, newValue in
-            editor.copyFrom(model: newValue)
-        })
         .toolbar {
             #if os(macOS)
                 ToolbarItem(placement: .navigation) {
@@ -241,6 +235,9 @@ fileprivate final class EditorViewModel: ObservableObject {
 
     @Published var cover: URL? = nil {
         didSet {
+            if let oldCover = oldValue, oldCover.isFileURL {
+                try? FileManager.default.removeItem(at: oldCover)
+            }
             notifyEditing()
         }
     }
