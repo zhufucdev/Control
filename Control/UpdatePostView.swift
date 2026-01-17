@@ -1,13 +1,13 @@
 import Combine
 import Foundation
+import ImageIO
 import OpenAPIClient
 import PhotosUI
 import SDWebImageSwiftUI
 import SwiftData
 import SwiftUI
-import WebKit
-import ImageIO
 import UniformTypeIdentifiers
+import WebKit
 
 struct UpdatePostView: View {
     let model: CachedUpdatePost
@@ -57,7 +57,7 @@ fileprivate final class UpdatePostViewModel: ObservableObject {
             state = .camera(onCapture: { image in
                 do {
                     let data = try Data(cgImage: image)
-                    try self.editor.attachImage(filename: "IMG_\(Int.random(in: 10000...99999)).jpeg", data: data)
+                    try self.editor.attachImage(filename: "IMG_\(Int.random(in: 10000 ... 99999)).jpeg", data: data)
                 } catch {
                     print("Failed to attach cover image: \(error)")
                 }
@@ -115,17 +115,15 @@ fileprivate struct Editor: View {
                 }
                 .sharedBackgroundVisibility(.hidden)
             #endif
-            ToolbarItem {
-                Menu("Attach photo", systemImage: "photo.badge.plus") {
-                    Button("From Photos", systemImage: "photo.on.rectangle.angled") {
-                        editor.isPickingPhotos = true
-                    }
-
-                    #if os(iOS)
-                        Button("Take photos", systemImage: "camera", action: takePhoto)
-                    #endif
+            #if os(macOS)
+                ToolbarItemGroup(placement: .primaryAction) {
+                    attacheImageToolbarItems
                 }
-            }
+            #else
+                ToolbarItemGroup(placement: .bottomBar) {
+                    attacheImageToolbarItems
+                }
+            #endif
 
             if editor.isEditing {
                 ToolbarItem(placement: .confirmationAction) {
@@ -154,6 +152,24 @@ fileprivate struct Editor: View {
             photoLibrary: .shared()
         )
         .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    private var attacheImageToolbarItems: some View {
+        Group {
+            Button("From Photos", systemImage: "photo.on.rectangle.angled") {
+                editor.isPickingPhotos = true
+            }
+
+            #if os(iOS)
+                Button("Take photos", systemImage: "camera", action: takePhoto)
+            #endif
+
+            if editor.cover != nil {
+                Button("Clear image attachement", systemImage: "clear") {
+                    editor.cover = nil
+                }
+            }
+        }
     }
 }
 
@@ -237,7 +253,7 @@ fileprivate final class EditorViewModel: ObservableObject {
             self.cover = URL(string: cover.image)
             alt = cover.alt
         } else {
-            self.cover = nil
+            cover = nil
             alt = ""
         }
         isCopying = false
@@ -250,6 +266,12 @@ fileprivate final class EditorViewModel: ObservableObject {
         to.title = title
         to.summary = summary
         to.mask = mask
+        if let originalCover = to.cover, cover == nil {
+            // remove garbage
+            if let url = URL(string: originalCover.image), url.isFileURL {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
         to.cover = .init(image: cover?.absoluteString ?? "", alt: alt)
     }
 
@@ -359,7 +381,7 @@ fileprivate struct UpdatePostPreview: View {
                         var webpageConfig = WebPage.Configuration()
                         webpageConfig.websiteDataStore = .init(forIdentifier: UUID(uuidString: "8C885417-C368-463C-9154-43DB2B83CAB0")!)
                         webpageConfig.urlSchemeHandlers = [
-                            URLScheme("kfile")!: FileURLSchemaHandler()
+                            URLScheme("kfile")!: FileURLSchemaHandler(),
                         ]
                         return WebPage(configuration: webpageConfig)
                     }()
