@@ -4,7 +4,7 @@ import OpenAPIClient
 
 @Model
 final class CachedUpdatePost {
-    @Attribute(.unique) var id: Int
+    var id: Int
     var created: Date
     var header: String
     var title: String
