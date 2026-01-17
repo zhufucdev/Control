@@ -97,6 +97,7 @@ fileprivate struct Editor: View {
                 UpdatePostPreview(editor: editor)
             }
         }
+        .scrollDismissesKeyboard(.immediately)
         .onAppear {
             editor.copyFrom(model: model)
         }
@@ -128,9 +129,15 @@ fileprivate struct Editor: View {
             if editor.isEditing {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save", systemImage: "checkmark") {
+                        #if os(iOS)
+                            // hide keyboard
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        #endif
                         editor.commit(to: model)
                         onSave()
-                        editor.isEditing = false
+                        withAnimation {
+                            editor.isEditing = false
+                        }
                     }
                 }
             }
