@@ -11,14 +11,27 @@ struct Credentials {
             try await withCheckedThrowingContinuation { continuation in
                 DispatchQueue.global().async {
                     do {
-                        let key = try Keychain().getString(PostAuthKey)
-                        if let key = key {
-                            continuation.resume(returning: key)
-                        } else if let hasKey = try? Keychain().contains(PostAuthKey, withoutAuthenticationUI: true), !hasKey {
-                            continuation.resume(throwing: CredentialAccessDenialError(keychainKey: PostAuthKey))
-                        } else {
-                            continuation.resume(returning: nil)
-                        }
+                        #if os(iOS)
+                            if !(try Keychain().contains(PostAuthKey, withoutAuthenticationUI: true)) {
+                                continuation.resume(returning: nil)
+                                return
+                            }
+                            let key = try Keychain().getString(PostAuthKey)
+                            if let key = key {
+                                continuation.resume(returning: key)
+                            } else {
+                                continuation.resume(throwing: CredentialAccessDenialError(keychainKey: PostAuthKey))
+                            }
+                        #elseif os(macOS)
+                            let key = try Keychain().getString(PostAuthKey)
+                            if let key {
+                                continuation.resume(returning: key)
+                            } else if let hasKey = try? Keychain().contains(PostAuthKey, withoutAuthenticationUI: true), hasKey {
+                                continuation.resume(throwing: CredentialAccessDenialError(keychainKey: PostAuthKey))
+                            } else {
+                                continuation.resume(returning: nil)
+                            }
+                        #endif
                     } catch {
                         continuation.resume(throwing: error)
                     }
@@ -34,10 +47,10 @@ struct Credentials {
                     if let value = newValue {
                         #if os(iOS)
                             let authenticationPolicy: AuthenticationPolicy =
-                                [.biometryAny, .devicePasscode]
+                                [.biometryAny, .or, .devicePasscode]
                         #elseif os(macOS)
                             let authenticationPolicy: AuthenticationPolicy =
-                                [.biometryAny, .devicePasscode, .watch]
+                                [.biometryAny, .or, .devicePasscode, .watch]
                         #endif
                         try Keychain()
                             .accessibility(
