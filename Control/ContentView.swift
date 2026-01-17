@@ -14,7 +14,7 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List {
-                ForEach(items) { item in
+                ForEach(items, id: \.persistentModelID) { item in
                     NavigationLink {
                         UpdatePostView(model: item) {
                         }
