@@ -1,13 +1,15 @@
+import OpenAPIClient
 import SwiftData
 import SwiftUI
-import OpenAPIClient
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \CachedUpdatePost.created, order: .reverse) private var items: [CachedUpdatePost]
-    
-    @State var pullTrialId = 0
-    @State var errorAlertContent: String? = nil
+
+    @State private var pullTrialId = 0
+    @State private var errorAlertContent: String? = nil
+
+    let onSettingsUpdated: (SettingsUpdate?) -> Void
 
     var body: some View {
         NavigationSplitView {
@@ -15,7 +17,6 @@ struct ContentView: View {
                 ForEach(items) { item in
                     NavigationLink {
                         UpdatePostView(model: item) {
-                            
                         }
                     } label: {
                         Text(item.title)
@@ -32,7 +33,14 @@ struct ContentView: View {
                         EditButton()
                     }
                 #endif
-                ToolbarItem {
+                ToolbarItemGroup {
+                    #if os(iOS)
+                        NavigationLink {
+                            SettingsView(onModification: onSettingsUpdated)
+                        } label: {
+                            Label("Settings", systemImage: "gear")
+                        }
+                    #endif
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
                     }
@@ -52,7 +60,7 @@ struct ContentView: View {
                             modelContext.insert(addition)
                         }
                     }
-                } catch ErrorResponse.error(let status, let body, let response, let error) {
+                } catch let ErrorResponse.error(status, body, response, error) {
                     if let body = body, response?.mimeType == "plain/text" {
                         errorAlertContent = String(data: body, encoding: .utf8)
                     } else {
@@ -104,8 +112,14 @@ struct ContentView: View {
     }
 }
 
+fileprivate enum DetailSplitRoute {
+    case placeholder
+    case edit(CachedUpdatePost)
+    case settings
+}
+
 #Preview {
-    ContentView()
+    ContentView { _ in }
         .modelContainer(for: CachedUpdatePost.self, inMemory: true)
         .modelContainer(for: CachedGalleryItem.self, inMemory: true)
 }

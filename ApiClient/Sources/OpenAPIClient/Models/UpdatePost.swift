@@ -14,7 +14,7 @@ public struct UpdatePost: Sendable, Codable, ParameterConvertible, Hashable {
     /** ISO format time representation */
     public var created: Date
     /** Leading header text, in bold color and monospace font */
-    public var header: String?
+    public var header: String
     /** Title text in Futura font */
     public var title: String
     /** Tweet content in system Sans font */
@@ -27,7 +27,7 @@ public struct UpdatePost: Sendable, Codable, ParameterConvertible, Hashable {
     public var trashed: Bool
     public var cover: UpdatePostCover?
 
-    public init(id: Int, created: Date, header: String?, title: String, summary: String, mask: Shape, locale: SupportedLocale, trashed: Bool, cover: UpdatePostCover?) {
+    public init(id: Int, created: Date, header: String, title: String, summary: String, mask: Shape, locale: SupportedLocale, trashed: Bool, cover: UpdatePostCover?) {
         self.id = id
         self.created = created
         self.header = header

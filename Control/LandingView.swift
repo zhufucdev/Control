@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LandingView: View {
-    let onSubmit: (Submission) -> Void
+    let onSubmit: (SettingsUpdate) -> Void
 
     @State private var postAuthKeyBuffer = ""
     @State private var endpointBaseUrlBuffer = DefaultApiEndpoint
@@ -10,13 +10,13 @@ struct LandingView: View {
     var body: some View {
         NavigationStack {
             Form {
-                SettingsView(
+                SettingsView.BackendSection(
                     endpointBaseUrl: $endpointBaseUrlBuffer,
                     mainSiteUrl: $mainSiteUrlBuffer,
                     postAuthKey: $postAuthKeyBuffer
                 )
                 Button("Continue") {
-                    onSubmit(Submission(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
+                    onSubmit(SettingsUpdate(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.accentColor)
@@ -40,7 +40,7 @@ struct LandingView: View {
     }
 }
 
-struct Submission {
+struct SettingsUpdate {
     let endpoint: String
     let postAuthKey: String
     let mainSiteUrl: String

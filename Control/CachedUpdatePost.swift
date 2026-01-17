@@ -6,7 +6,7 @@ import OpenAPIClient
 final class CachedUpdatePost {
     @Attribute(.unique) var id: Int
     var created: Date
-    var header: String?
+    var header: String
     var title: String
     var summary: String
     var cover: UpdatePostCover?
@@ -14,7 +14,7 @@ final class CachedUpdatePost {
     var locale: SupportedLocale
     var trashed: Bool
     
-    init(id: Int, created: Date, header: String? = nil, title: String, summary: String, cover: UpdatePostCover? = nil, mask: Shape, locale: SupportedLocale, trashed: Bool) {
+    init(id: Int, created: Date, header: String, title: String, summary: String, cover: UpdatePostCover? = nil, mask: Shape, locale: SupportedLocale, trashed: Bool) {
         self.id = id
         self.created = created
         self.header = header
@@ -31,7 +31,7 @@ final class CachedUpdatePost {
     }
     
     convenience init() {
-        self.init(id: -1, created: Date(), title: String(localized: "New post"), summary: String(localized: "No content"), mask: .clover, locale: .en, trashed: false)
+        self.init(id: -1, created: Date(), header: String(localized: "Status update"), title: String(localized: "New post"), summary: String(localized: "No content"), mask: .clover, locale: .en, trashed: false)
     }
 }
 

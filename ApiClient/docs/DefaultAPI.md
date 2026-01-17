@@ -731,7 +731,7 @@ Name | Type | Description  | Notes
 
 # **updateTemplateGet**
 ```swift
-    open class func updateTemplateGet(completion: @escaping (_ data: JSONValue?, _ error: Error?) -> Void)
+    open class func updateTemplateGet(completion: @escaping (_ data: String?, _ error: Error?) -> Void)
 ```
 
 Update Post Card Template
@@ -762,7 +762,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-**JSONValue**
+**String**
 
 ### Authorization
 

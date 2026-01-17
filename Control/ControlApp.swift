@@ -1,15 +1,15 @@
-import SwiftUI
-import SDWebImageSVGCoder
-import SwiftData
 import OpenAPIClient
 import SDWebImage
+import SDWebImageSVGCoder
+import SwiftData
+import SwiftUI
 
 @main
 struct ControlApp: App {
     init() {
         SDImageCodersManager.shared.addCoder(SDImageSVGCoder.shared)
     }
-    
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             CachedGalleryItem.self,
@@ -23,17 +23,17 @@ struct ControlApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
-    
+
     @AppStorage(UserDefaultsKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultApiEndpoint
     @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
     @State var appState: ControlAppState = .locked
-    
+
     func onInitialzie() {
         Task {
             do {
                 let key = try await Credentials.default.postAuthKey
                 let endpoint = endpointBaseUrl
-                if let key = key {
+                if let key {
                     OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpoint, postAuthKey: key)
                     withAnimation {
                         appState = .ready(endpointBaseUrl: endpoint, postAuthKey: key, mainSiteUrl: mainSiteUrl)
@@ -46,8 +46,12 @@ struct ControlApp: App {
             }
         }
     }
-    
-    func onLandingSubmitted(submission: Submission) {
+
+    func onLandingSubmitted(submission: SettingsUpdate) {
+        if submission.postAuthKey.isEmpty {
+            appState = .uninitialized
+        }
+
         Task(priority: .high) {
             try? await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
             OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
@@ -82,7 +86,19 @@ struct ControlApp: App {
             appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
         }
     }
-    
+
+    func onSettingsUpdated(update: SettingsUpdate?) {
+        Task {
+            await withDebounce(key: "onSettingsUpdate", for: .seconds(3)) {
+                if let update {
+                    onLandingSubmitted(submission: update)
+                } else if case let .ready(_, postAuthKey, _) = appState {
+                    onLandingSubmitted(submission: .init(endpoint: endpointBaseUrl, postAuthKey: postAuthKey, mainSiteUrl: mainSiteUrl))
+                }
+            }
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             switch appState {
@@ -95,30 +111,25 @@ struct ControlApp: App {
                 }
             case .uninitialized:
                 LandingView(onSubmit: onLandingSubmitted)
-            case .ready(let endpoint, let postAuthKey, let mainSite):
-                ContentView()
-                    .environment(\.postAuthKey, postAuthKey)
-                    .environment(\.endpointBaseUrl, endpoint)
-                    .environment(\.mainSiteUrl, mainSite)
-                    .modelContainer(sharedModelContainer)
+            case let .ready(endpoint, postAuthKey, mainSite):
+                ContentView(onSettingsUpdated: { update in
+                    onSettingsUpdated(update: update)
+                })
+                .environment(\.postAuthKey, postAuthKey)
+                .environment(\.endpointBaseUrl, endpoint)
+                .environment(\.mainSiteUrl, mainSite)
+                .modelContainer(sharedModelContainer)
             }
         }
-        
+
         #if os(macOS)
-        Settings {
-            Form {
-                SettingsView(endpointBaseUrl: $endpointBaseUrl, mainSiteUrl: $mainSiteUrl, postAuthKey: Binding(get: {
-                    appState.postAuthKey ?? ""
-                }, set: { newValue in
-                    // TODO: implement this
-                }))
-                .onDisappear {
-                    onLandingSubmitted(submission: .init(endpoint: endpointBaseUrl, postAuthKey: appState.postAuthKey ?? "", mainSiteUrl: mainSiteUrl))
+            Settings {
+                SettingsView { update in
+                    onSettingsUpdated(update: update)
                 }
+                .frame(maxWidth: 600)
+                .padding()
             }
-            .frame(maxWidth: 600)
-            .padding()
-        }
         #endif
     }
 }
@@ -127,17 +138,4 @@ enum ControlAppState {
     case locked
     case uninitialized
     case ready(endpointBaseUrl: String, postAuthKey: String, mainSiteUrl: String)
-}
-
-extension ControlAppState {
-    var postAuthKey: String? {
-        switch self {
-        case .locked:
-            fallthrough
-        case .uninitialized:
-            return nil
-        case .ready(_, let postAuthKey, _):
-            return postAuthKey
-        }
-    }
 }

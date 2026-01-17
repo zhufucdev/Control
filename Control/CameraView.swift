@@ -2,55 +2,46 @@ import Foundation
 import SwiftUI
 
 #if os(iOS)
-    struct PhotoCapture: View {
-        @Binding var showImageCapture: Bool
-        @Binding var image: Image?
+    struct CameraView: UIViewControllerRepresentable {
+        let allowsEditing: Bool = true
+        let result: (Optional<UIImage>) -> Void
 
-        var body: some View {
-            ImagePicker(isShown: $showImageCapture, image: $image)
-        }
-    }
-
-    fileprivate class ImagePickerCoordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
-        @Binding var isShown: Bool
-        @Binding var image: Image?
-
-        init(isShown: Binding<Bool>, image: Binding<Image?>) {
-            _isShown = isShown
-            _image = image
-        }
-
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            let uiImage = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
-            image = Image(uiImage: uiImage)
-            isShown = false
-        }
-
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-            isShown = false
-        }
-    }
-
-    fileprivate struct ImagePicker: UIViewControllerRepresentable {
-        @Binding var isShown: Bool
-        @Binding var image: Image?
-
-        func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<ImagePicker>) {
+        func updateUIViewController(_ uiViewController: UIImagePickerController, context: UIViewControllerRepresentableContext<CameraView>) {
+            uiViewController.allowsEditing = allowsEditing
         }
 
         func makeCoordinator() -> ImagePickerCoordinator {
-            return ImagePickerCoordinator(isShown: $isShown, image: $image)
+            return ImagePickerCoordinator(result)
         }
 
-        func makeUIViewController(context: UIViewControllerRepresentableContext<ImagePicker>) -> UIImagePickerController {
+        func makeUIViewController(context: UIViewControllerRepresentableContext<CameraView>) -> UIImagePickerController {
             let picker = UIImagePickerController()
             picker.delegate = context.coordinator
+            picker.allowsEditing = true
+            
             if !UIImagePickerController.isSourceTypeAvailable(.camera) {
                 picker.sourceType = .photoLibrary
             } else {
                 picker.sourceType = .camera
             }
             return picker
+        }
+    }
+
+    class ImagePickerCoordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        let result: (Optional<UIImage>) -> Void
+
+        init(_ result: @escaping (Optional<UIImage>) -> Void) {
+            self.result = result
+        }
+        
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            let uiImage = info[UIImagePickerController.InfoKey.originalImage] as! UIImage
+            result(.some(uiImage))
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            result(.none)
         }
     }
 #endif
