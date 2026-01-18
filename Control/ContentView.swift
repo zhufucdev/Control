@@ -26,7 +26,7 @@ struct ContentView: View {
         } detail: {
             if selection.count <= 0 {
                 Text("Select an item")
-            } else if let item = items.first(where: { selection.contains($0.persistentModelID) }) {
+            } else if let item = items.first(where: { selection.contains($0.persistentModelID) && !$0.trashed }) {
                 UpdatePostView(model: item) {
                 }
             } else {
