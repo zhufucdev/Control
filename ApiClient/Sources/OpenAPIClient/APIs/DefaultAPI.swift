@@ -588,10 +588,10 @@ open class DefaultAPI {
      
      - parameter updatePutRequest: (body)  
      - parameter apiConfiguration: The configuration for the http request.
-     - returns: Double
+     - returns: Int
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func updatePut(updatePutRequest: UpdatePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Double {
+    open class func updatePut(updatePutRequest: UpdatePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Int {
         return try await updatePutWithRequestBuilder(updatePutRequest: updatePutRequest, apiConfiguration: apiConfiguration).execute().body
     }
 
@@ -604,9 +604,9 @@ open class DefaultAPI {
        - name: PostAuthKey
      - parameter updatePutRequest: (body)  
      - parameter apiConfiguration: The configuration for the http request.
-     - returns: RequestBuilder<Double> 
+     - returns: RequestBuilder<Int> 
      */
-    open class func updatePutWithRequestBuilder(updatePutRequest: UpdatePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<Double> {
+    open class func updatePutWithRequestBuilder(updatePutRequest: UpdatePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<Int> {
         let localVariablePath = "/update"
         let localVariableURLString = apiConfiguration.basePath + localVariablePath
         let localVariableParameters = JSONEncodingHelper.encodingParameters(forEncodableObject: updatePutRequest, codableHelper: apiConfiguration.codableHelper)
@@ -619,7 +619,7 @@ open class DefaultAPI {
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
 
-        let localVariableRequestBuilder: RequestBuilder<Double>.Type = apiConfiguration.requestBuilderFactory.getBuilder()
+        let localVariableRequestBuilder: RequestBuilder<Int>.Type = apiConfiguration.requestBuilderFactory.getBuilder()
 
         return localVariableRequestBuilder.init(method: "PUT", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true, apiConfiguration: apiConfiguration)
     }

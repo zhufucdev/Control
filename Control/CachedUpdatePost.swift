@@ -35,3 +35,8 @@ final class CachedUpdatePost {
     }
 }
 
+extension UpdatePost {
+    init(cache: CachedUpdatePost) {
+        self.init(id: cache.id, created: cache.created, header: cache.header, title: cache.title, summary: cache.summary, mask: cache.mask, locale: cache.locale, trashed: cache.trashed, cover: cache.cover)
+    }
+}

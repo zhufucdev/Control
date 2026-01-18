@@ -681,7 +681,7 @@ Name | Type | Description  | Notes
 
 # **updatePut**
 ```swift
-    open class func updatePut(updatePutRequest: UpdatePutRequest, completion: @escaping (_ data: Double?, _ error: Error?) -> Void)
+    open class func updatePut(updatePutRequest: UpdatePutRequest, completion: @escaping (_ data: Int?, _ error: Error?) -> Void)
 ```
 
 Create Update Post
@@ -716,7 +716,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**Double**
+**Int**
 
 ### Authorization
 

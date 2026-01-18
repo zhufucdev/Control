@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var targetItem: CachedUpdatePost? = nil
     @State private var errorAlertContent: String? = nil
     @State private var pushErrorAlertContent: String? = nil
+    @State private var pushState: PushSynchronizeState? = nil
+    @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
 
     let onSettingsUpdated: (SettingsUpdate?) -> Void
 
@@ -16,8 +18,8 @@ struct ContentView: View {
     private var items: [CachedUpdatePost]
 
     var body: some View {
-        NavigationSplitView {
-            PostsList(selection: $selection, onSettingsUpdated: onSettingsUpdated)
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            PostsList(selection: $selection, pushState: pushState, onSettingsUpdated: onSettingsUpdated)
                 .toolbar {
                     #if os(iOS)
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -25,18 +27,24 @@ struct ContentView: View {
                         }
                     #endif
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } detail: {
             if let targetItem {
-                UpdatePostView(model: targetItem) {
-                    Task {
-                        do {
-                            try await targetItem.pushToBackend()
-                        } catch let ErrorResponse.error(_, body, _, innerError) {
-                            pushErrorAlertContent = innerError.localizedDescription
-                            print("Banckend push sync failed: \(innerError)")
-                            if let body, let bodyText = String(data: body, encoding: .utf8) {
-                                print("\(bodyText)")
+                GeometryReader { surface in
+                    UpdatePostView(model: targetItem) {
+                        Task {
+                            do {
+                                for try await state in targetItem.pushToBackend() {
+                                    pushState = state
+                                }
+                            } catch let ErrorResponse.error(_, body, _, innerError) {
+                                pushErrorAlertContent = innerError.localizedDescription
+                                print("Banckend push sync failed: \(innerError)")
+                                if let body, let bodyText = String(data: body, encoding: .utf8) {
+                                    print("\(bodyText)")
+                                }
                             }
+                            pushState = nil
                         }
                     }
                 }
@@ -46,18 +54,8 @@ struct ContentView: View {
         }
         .task(id: pullTrialId) {
             do {
-                let posts = Set((try await DefaultAPI.updateListGet()).map(CachedUpdatePost.init))
-                let diff = Diff(old: Set(items), new: posts)
-                DispatchQueue.main.async {
-                    for removal in diff.removal {
-                        if removal.id >= 0 {
-                            modelContext.delete(removal)
-                        }
-                    }
-                    for addition in diff.addition {
-                        modelContext.insert(addition)
-                    }
-                }
+                let diff = try await items.pullFromBackend()
+                modelContext.apply(diffPosts: diff)
             } catch let ErrorResponse.error(status, body, response, error) {
                 if error is CancellationError {
                     return
@@ -73,7 +71,7 @@ struct ContentView: View {
                 print(error)
             }
         }
-        .onChange(of: selection, { oldValue, newValue in
+        .onChange(of: selection, { _, newValue in
             if let targetId = newValue.first {
                 targetItem = items.first(where: { $0.persistentModelID == targetId })
             }
@@ -112,11 +110,21 @@ struct ContentView: View {
                 Text(content)
             }
         })
+        .toolbar {
+            if let pushState, columnVisibility == .detailOnly {
+                ToolbarItem(placement: .status) {
+                    PushStateView(state: pushState)
+                        .padding(.horizontal)
+                        .padding(.bottom)
+                }
+            }
+        }
     }
 }
 
 struct PostsList: View {
     @Binding var selection: Set<PersistentIdentifier>
+    let pushState: PushSynchronizeState?
     let onSettingsUpdated: (SettingsUpdate?) -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -157,6 +165,10 @@ struct PostsList: View {
                         }
                     }
                 }
+            }
+            if let pushState {
+                PushStateView(state: pushState)
+                    .padding(.top, 42)
             }
         }
         .animation(.spring, value: items)
@@ -202,7 +214,7 @@ struct PostsList: View {
             }
         #endif
     }
-
+    
     private func addItem() {
         withAnimation {
             let newItem = CachedUpdatePost()
@@ -230,6 +242,33 @@ struct PostsList: View {
         withAnimation {
             for item in items {
                 modelContext.delete(item)
+            }
+        }
+    }
+}
+
+struct PushStateView: View {
+    let state: PushSynchronizeState
+    var body: some View {
+        Group {
+            switch state {
+            case .uploadingImage(let progress):
+                VStack {
+                    ProgressView(value: progress)
+                    Text("Uploading image...")
+                }
+            case .updatingContent:
+                VStack {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text("Updating post...")
+                }
+            case .creatingContent:
+                VStack {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text("Creating post...")
+                }
             }
         }
     }
