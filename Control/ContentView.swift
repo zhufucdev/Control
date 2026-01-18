@@ -5,7 +5,9 @@ import SwiftUI
 struct ContentView: View {
     @State private var pullTrialId = 0
     @State private var selection = Set<PersistentIdentifier>()
+    @State private var targetItem: CachedUpdatePost? = nil
     @State private var errorAlertContent: String? = nil
+    @State private var pushErrorAlertContent: String? = nil
 
     let onSettingsUpdated: (SettingsUpdate?) -> Void
 
@@ -24,13 +26,22 @@ struct ContentView: View {
                     #endif
                 }
         } detail: {
-            if selection.count <= 0 {
-                Text("Select an item")
-            } else if let item = items.first(where: { selection.contains($0.persistentModelID) && !$0.trashed }) {
-                UpdatePostView(model: item) {
+            if let targetItem {
+                UpdatePostView(model: targetItem) {
+                    Task {
+                        do {
+                            try await targetItem.pushToBackend()
+                        } catch let ErrorResponse.error(_, body, _, innerError) {
+                            pushErrorAlertContent = innerError.localizedDescription
+                            print("Banckend push sync failed: \(innerError)")
+                            if let body, let bodyText = String(data: body, encoding: .utf8) {
+                                print("\(bodyText)")
+                            }
+                        }
+                    }
                 }
             } else {
-                Text("This item is delete. Recover it first.")
+                Text("Select an item")
             }
         }
         .task(id: pullTrialId) {
@@ -62,6 +73,11 @@ struct ContentView: View {
                 print(error)
             }
         }
+        .onChange(of: selection, { oldValue, newValue in
+            if let targetId = newValue.first {
+                targetItem = items.first(where: { $0.persistentModelID == targetId })
+            }
+        })
         .alert("Could not pull update posts", isPresented: Binding(get: {
             errorAlertContent != nil
         }, set: { newValue in
@@ -78,6 +94,21 @@ struct ContentView: View {
             }
         }, message: {
             if let content = errorAlertContent {
+                Text(content)
+            }
+        })
+        .alert("Could not push update post", isPresented: Binding(get: {
+            pushErrorAlertContent != nil
+        }, set: { newValue in
+            if !newValue {
+                pushErrorAlertContent = nil
+            }
+        }), actions: {
+            Button(role: .cancel) {
+                pushErrorAlertContent = nil
+            }
+        }, message: {
+            if let content = pushErrorAlertContent {
                 Text(content)
             }
         })
@@ -114,11 +145,8 @@ struct PostsList: View {
             }
             Section("Deleted", isExpanded: $isDeletedExpanded) {
                 ForEach(trashedItems, id: \.persistentModelID) { item in
-                    NavigationLink {
-                        UpdatePostView(model: item) {
-                        }
-                    } label: {
-                        Text(item.title)
+                    LabeledContent(item.title) {
+                        Text(item.summary)
                     }
                     .swipeActions {
                         Button("Recover", systemImage: "arrow.up.trash") {

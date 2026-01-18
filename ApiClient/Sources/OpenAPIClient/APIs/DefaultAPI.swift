@@ -318,14 +318,14 @@ open class DefaultAPI {
      Upload Image
      
      - parameter xAltText: (header) Alernative text describing the image content 
-     - parameter xFIleName: (header) Name of the original image file 
+     - parameter xFileName: (header) Name of the original image file 
      - parameter body: (body)  
      - parameter apiConfiguration: The configuration for the http request.
      - returns: ImagePost201Response
      */
     @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func imagePost(xAltText: String, xFIleName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> ImagePost201Response {
-        return try await imagePostWithRequestBuilder(xAltText: xAltText, xFIleName: xFIleName, body: body, apiConfiguration: apiConfiguration).execute().body
+    open class func imagePost(xAltText: String, xFileName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> ImagePost201Response {
+        return try await imagePostWithRequestBuilder(xAltText: xAltText, xFileName: xFileName, body: body, apiConfiguration: apiConfiguration).execute().body
     }
 
     /**
@@ -336,12 +336,12 @@ open class DefaultAPI {
        - type: apiKey X-POST-AUTH-KEY (HEADER)
        - name: PostAuthKey
      - parameter xAltText: (header) Alernative text describing the image content 
-     - parameter xFIleName: (header) Name of the original image file 
+     - parameter xFileName: (header) Name of the original image file 
      - parameter body: (body)  
      - parameter apiConfiguration: The configuration for the http request.
      - returns: RequestBuilder<ImagePost201Response> 
      */
-    open class func imagePostWithRequestBuilder(xAltText: String, xFIleName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<ImagePost201Response> {
+    open class func imagePostWithRequestBuilder(xAltText: String, xFileName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<ImagePost201Response> {
         let localVariablePath = "/image"
         let localVariableURLString = apiConfiguration.basePath + localVariablePath
         let localVariableParameters = ["body": body]
@@ -351,7 +351,7 @@ open class DefaultAPI {
         let localVariableNillableHeaders: [String: (any Sendable)?] = [
             "Content-Type": "application/octet-stream",
             "X-Alt-Text": xAltText.asParameter(codableHelper: apiConfiguration.codableHelper),
-            "X-FIle-Name": xFIleName.asParameter(codableHelper: apiConfiguration.codableHelper),
+            "X-File-Name": xFileName.asParameter(codableHelper: apiConfiguration.codableHelper),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
