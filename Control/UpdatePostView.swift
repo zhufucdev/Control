@@ -1,3 +1,4 @@
+import AsyncAlgorithms
 import Combine
 import Foundation
 import ImageIO
@@ -8,10 +9,10 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
-import AsyncAlgorithms
 
 struct UpdatePostView: View {
     let model: CachedUpdatePost
+    let id: Int
     let onSave: () -> Void
 
     @StateObject private var viewModel = UpdatePostViewModel()
@@ -47,6 +48,9 @@ struct UpdatePostView: View {
         }
         .onChange(of: model, { _, newValue in
             viewModel.editor.copyFrom(model: newValue)
+        })
+        .onChange(of: id, { _, _ in
+            viewModel.editor.copyFrom(model: model)
         })
     }
 }
@@ -269,7 +273,7 @@ fileprivate final class EditorViewModel: ObservableObject {
             notifyEditing()
         }
     }
-    
+
     @Published var altTextEditingChannel: AsyncChannel<Optional<String>>? = nil
 
     func notifyEditing() {
@@ -327,7 +331,7 @@ fileprivate final class EditorViewModel: ObservableObject {
             }
         }
         channel.finish()
-        
+
         let container = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
             .appending(component: UUID().uuidString, directoryHint: .isDirectory)
         let resultingFile = container.appending(component: filename, directoryHint: .notDirectory)
@@ -472,7 +476,7 @@ fileprivate class TemplateCache: ObservableObject {
 
 #Preview {
     NavigationStack {
-        UpdatePostView(model: .init()) {
+        UpdatePostView(model: .init(), id: 0) {
         }
     }
 }

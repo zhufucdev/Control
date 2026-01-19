@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var pushErrorAlertContent: String? = nil
     @State private var pushState: PushSynchronizeState? = nil
     @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
+    @State private var syncId = 0
 
     let onSettingsUpdated: (SettingsUpdate?) -> Void
 
@@ -40,7 +41,7 @@ struct ContentView: View {
                 }
         } detail: {
             if let targetItem {
-                UpdatePostView(model: targetItem) {
+                UpdatePostView(model: targetItem, id: syncId) {
                     Task {
                         do {
                             for try await state in targetItem.pushToBackend() {
@@ -54,6 +55,7 @@ struct ContentView: View {
                             }
                         }
                         pushState = nil
+                        syncId += 1
                     }
                 }
                 .bottomStatus(height: pushState != nil && columnVisibility == .detailOnly ? 50 : 0) {
