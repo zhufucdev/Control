@@ -178,28 +178,24 @@ struct PostsList: View {
     var body: some View {
         List(selection: $selection) {
             ForEach(items, id: \.persistentModelID) { item in
-                LabeledContent(item.title) {
-                    Text(item.summary)
-                }
-                .swipeActions {
-                    Button(role: .destructive) {
-                        trashItems([item])
+                buildListItem(for: item)
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            trashItems([item])
+                        }
                     }
-                }
             }
             Section("Deleted", isExpanded: $isDeletedExpanded) {
                 ForEach(trashedItems, id: \.persistentModelID) { item in
-                    LabeledContent(item.title) {
-                        Text(item.summary)
-                    }
-                    .swipeActions {
-                        Button("Recover", systemImage: "arrow.up.trash") {
-                            recoverItems([item])
+                    buildListItem(for: item)
+                        .swipeActions {
+                            Button("Recover", systemImage: "arrow.up.trash") {
+                                recoverItems([item])
+                            }
+                            Button(role: .destructive) {
+                                deleteItems([item])
+                            }
                         }
-                        Button(role: .destructive) {
-                            deleteItems([item])
-                        }
-                    }
                 }
             }
         }
@@ -247,6 +243,21 @@ struct PostsList: View {
         #endif
     }
 
+    private func buildListItem(for: CachedUpdatePost) -> some View {
+        LabeledContent(`for`.title) {
+            if !`for`.draft {
+                Text(`for`.summary)
+            } else {
+                Text("Draft")
+            }
+        }
+        .contextMenu {
+            Button("Duplicate", systemImage: "plus.square.on.square") {
+                duplicateItem(item: `for`)
+            }
+        }
+    }
+
     private func addItem() {
         withAnimation {
             let newItem = CachedUpdatePost()
@@ -278,6 +289,14 @@ struct PostsList: View {
                 onDeleteItem(item)
                 modelContext.delete(item)
             }
+        }
+    }
+
+    private func duplicateItem(item: CachedUpdatePost) {
+        withAnimation {
+            var post = UpdatePost(cache: item)
+            post.id = -1
+            modelContext.insert(CachedUpdatePost(from: post))
         }
     }
 }

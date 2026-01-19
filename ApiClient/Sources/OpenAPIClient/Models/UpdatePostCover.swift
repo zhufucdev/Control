@@ -13,15 +13,19 @@ public struct UpdatePostCover: Sendable, Codable, ParameterConvertible, Hashable
     public var image: String
     /** Alternative text */
     public var alt: String
+    /** Image identifier */
+    public var id: Int
 
-    public init(image: String, alt: String) {
+    public init(image: String, alt: String, id: Int) {
         self.image = image
         self.alt = alt
+        self.id = id
     }
 
     public enum CodingKeys: String, CodingKey, CaseIterable {
         case image
         case alt
+        case id
     }
 
     // Encodable protocol methods
@@ -30,6 +34,10 @@ public struct UpdatePostCover: Sendable, Codable, ParameterConvertible, Hashable
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(image, forKey: .image)
         try container.encode(alt, forKey: .alt)
+        try container.encode(id, forKey: .id)
     }
 }
 
+
+@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
+extension UpdatePostCover: Identifiable {}

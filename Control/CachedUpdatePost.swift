@@ -14,6 +14,10 @@ final class CachedUpdatePost {
     var locale: SupportedLocale
     var trashed: Bool
     
+    var draft: Bool {
+        id < 0
+    }
+    
     init(id: Int, created: Date, header: String, title: String, summary: String, cover: UpdatePostCover? = nil, mask: Shape, locale: SupportedLocale, trashed: Bool) {
         self.id = id
         self.created = created

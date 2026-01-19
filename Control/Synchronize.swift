@@ -8,7 +8,6 @@ extension CachedUpdatePost {
         return AsyncThrowingStream { stream in
             Task {
                 do {
-                    var coverId: Int?
                     if let cover, let url = URL(string: cover.image), url.isFileURL {
                         stream.yield(.uploadingImage(progress: 0))
                         let response = try await DefaultAPI.imagePost(xAltText: cover.alt, xFileName: url.lastPathComponent, body: url)
@@ -18,20 +17,17 @@ extension CachedUpdatePost {
                             print("Warning: failed to delete uploaded cover image")
                             print(error)
                         }
-                        coverId = response.id
-                        self.cover = .init(image: response.url, alt: cover.alt)
-                    } else if cover == nil {
-                        coverId = -1
+                        self.cover = .init(image: response.url, alt: cover.alt, id: response.id)
                     }
 
                     if id < 0 {
-                        let request = UpdatePutRequest(locale: locale, header: header, title: title, summary: summary, cover: coverId, mask: mask)
+                        let request = UpdatePutRequest(locale: locale, header: header, title: title, summary: summary, cover: cover?.id, mask: mask)
                         stream.yield(.creatingContent)
                         let newId = try await DefaultAPI.updatePut(updatePutRequest: request)
                         self.id = newId
                     } else {
                         stream.yield(.updatingContent)
-                        let request = UpdateIdPatchRequest(locale: locale, header: header, title: title, summary: summary, cover: coverId, mask: mask, trashed: trashed)
+                        let request = UpdateIdPatchRequest(locale: locale, header: header, title: title, summary: summary, cover: cover?.id, mask: mask, trashed: trashed)
                         _ = try await DefaultAPI.updateIdPatch(id: String(id), updateIdPatchRequest: request)
                     }
                     stream.finish()

@@ -127,11 +127,11 @@ fileprivate struct Editor: View {
             #endif
             #if os(macOS)
                 ToolbarItemGroup(placement: .primaryAction) {
-                    attacheImageToolbarItems
+                    attachmentToolbarItems
                 }
             #else
                 ToolbarItemGroup(placement: .bottomBar) {
-                    attacheImageToolbarItems
+                    attachmentToolbarItems
                 }
             #endif
 
@@ -189,7 +189,7 @@ fileprivate struct Editor: View {
         .frame(maxHeight: .infinity, alignment: .top)
     }
 
-    private var attacheImageToolbarItems: some View {
+    private var attachmentToolbarItems: some View {
         Group {
             Button("From Photos", systemImage: "photo.on.rectangle.angled") {
                 editor.isPickingPhotos = true
@@ -198,10 +198,22 @@ fileprivate struct Editor: View {
             #if os(iOS)
                 Button("Take photos", systemImage: "camera", action: takePhoto)
             #endif
-
+            
             if editor.cover != nil {
                 Button("Clear image attachement", systemImage: "clear") {
                     editor.clearCover()
+                }
+            }
+
+            Menu("Locale", systemImage: "globe") {
+                ForEach(SupportedLocale.allCases, id: \.rawValue) { locale in
+                    Toggle(locale.name, isOn: Binding(get: {
+                        editor.locale == locale
+                    }, set: { isOn in
+                        if isOn {
+                            editor.locale = locale
+                        }
+                    }))
                 }
             }
         }
@@ -275,6 +287,12 @@ fileprivate final class EditorViewModel: ObservableObject {
     }
 
     @Published var altTextEditingChannel: AsyncChannel<Optional<String>>? = nil
+    
+    @Published var locale: SupportedLocale = .en {
+        didSet {
+            notifyEditing()
+        }
+    }
 
     func notifyEditing() {
         if !isCopying {
@@ -289,6 +307,7 @@ fileprivate final class EditorViewModel: ObservableObject {
         title = model.title
         summary = model.summary
         mask = model.mask
+        locale = model.locale
         if let cover = model.cover {
             self.cover = URL(string: cover.image)
             alt = cover.alt
@@ -306,6 +325,7 @@ fileprivate final class EditorViewModel: ObservableObject {
         to.title = title
         to.summary = summary
         to.mask = mask
+        to.locale = locale
         if let originalCover = to.cover, cover == nil {
             // remove garbage
             if let url = URL(string: originalCover.image), url.isFileURL {
@@ -313,7 +333,10 @@ fileprivate final class EditorViewModel: ObservableObject {
             }
         }
         if let cover {
-            to.cover = .init(image: cover.absoluteString, alt: alt)
+            if let oldCover = to.cover, oldCover.image != cover.absoluteString {
+                to.cover = .init(image: cover.absoluteString, alt: alt, id: 0)
+            }
+            // do nothing otherwise
         } else {
             to.cover = nil
         }
