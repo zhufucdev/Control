@@ -1,3 +1,4 @@
+import AsyncAlgorithms
 import Combine
 import Foundation
 import ImageIO
@@ -11,6 +12,7 @@ import WebKit
 
 struct UpdatePostView: View {
     let model: CachedUpdatePost
+    let id: Int
     let onSave: () -> Void
 
     @StateObject private var viewModel = UpdatePostViewModel()
@@ -47,6 +49,9 @@ struct UpdatePostView: View {
         .onChange(of: model, { _, newValue in
             viewModel.editor.copyFrom(model: newValue)
         })
+        .onChange(of: id, { _, _ in
+            viewModel.editor.copyFrom(model: model)
+        })
     }
 }
 
@@ -63,11 +68,13 @@ fileprivate final class UpdatePostViewModel: ObservableObject {
     func openCameraForCapture() {
         withAnimation {
             state = .camera(onCapture: { image in
-                do {
-                    let data = try Data(cgImage: image)
-                    try self.editor.attachImage(filename: "IMG_\(Int.random(in: 10000 ... 99999)).jpeg", data: data)
-                } catch {
-                    print("Failed to attach cover image: \(error)")
+                Task {
+                    do {
+                        let data = try Data(cgImage: image)
+                        try await self.editor.attachImage(filename: "IMG_\(Int.random(in: 10000 ... 99999)).jpeg", data: data)
+                    } catch {
+                        print("Failed to attach cover image: \(error)")
+                    }
                 }
                 self.state = .editor(model: self.editor)
             }, onCancel: {
@@ -160,6 +167,25 @@ fileprivate struct Editor: View {
             preferredItemEncoding: .current,
             photoLibrary: .shared()
         )
+        .alert("Alternative text", isPresented: Binding(get: {
+            editor.altTextEditingChannel != nil
+        }, set: { open in
+            if !open {
+                editor.altTextEditingChannel = nil
+            }
+        }), presenting: editor.altTextEditingChannel, actions: { tx in
+            TextField("Describe this image in brief", text: $editor.alt)
+            Button(role: .cancel) {
+                Task {
+                    await tx.send(.none)
+                }
+            }
+            Button(role: .confirm) {
+                Task {
+                    await tx.send(.some(editor.alt))
+                }
+            }
+        })
         .frame(maxHeight: .infinity, alignment: .top)
     }
 
@@ -212,7 +238,7 @@ fileprivate final class EditorViewModel: ObservableObject {
         }
     }
 
-    @Published var isPickingPhotos: Bool = false
+    @Published var isPickingPhotos = false
 
     @Published var photoSelection: PhotosPickerItem? = nil {
         didSet {
@@ -221,7 +247,7 @@ fileprivate final class EditorViewModel: ObservableObject {
                 Task {
                     do {
                         if let image = try await photoSelection.loadTransferable(type: DataUrl.self) {
-                            try attachImage(filename: image.url.lastPathComponent, data: try Data(contentsOf: image.url))
+                            try await attachImage(filename: image.url.lastPathComponent, data: try Data(contentsOf: image.url))
                         } else {
                             print("No suitable conversion found from PhotosPickerItem to DataUrl")
                         }
@@ -247,6 +273,8 @@ fileprivate final class EditorViewModel: ObservableObject {
             notifyEditing()
         }
     }
+
+    @Published var altTextEditingChannel: AsyncChannel<Optional<String>>? = nil
 
     func notifyEditing() {
         if !isCopying {
@@ -284,10 +312,26 @@ fileprivate final class EditorViewModel: ObservableObject {
                 try? FileManager.default.removeItem(at: url)
             }
         }
-        to.cover = .init(image: cover?.absoluteString ?? "", alt: alt)
+        if let cover {
+            to.cover = .init(image: cover.absoluteString, alt: alt)
+        } else {
+            to.cover = nil
+        }
     }
 
-    func attachImage(filename: String, data: Data) throws {
+    func attachImage(filename: String, data: Data) async throws {
+        let channel = AsyncChannel<Optional<String>>()
+        altTextEditingChannel = channel
+        for await altText in channel {
+            if let altText {
+                alt = altText
+                break
+            } else {
+                return
+            }
+        }
+        channel.finish()
+
         let container = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
             .appending(component: UUID().uuidString, directoryHint: .isDirectory)
         let resultingFile = container.appending(component: filename, directoryHint: .notDirectory)
@@ -438,7 +482,7 @@ fileprivate class TemplateCache: ObservableObject {
 
 #Preview {
     NavigationStack {
-        UpdatePostView(model: .init()) {
+        UpdatePostView(model: .init(), id: 0) {
         }
     }
 }

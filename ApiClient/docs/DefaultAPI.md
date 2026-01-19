@@ -373,7 +373,7 @@ This endpoint does not need any parameter.
 
 # **imagePost**
 ```swift
-    open class func imagePost(xAltText: String, xFIleName: String, body: URL, completion: @escaping (_ data: ImagePost201Response?, _ error: Error?) -> Void)
+    open class func imagePost(xAltText: String, xFileName: String, body: URL, completion: @escaping (_ data: ImagePost201Response?, _ error: Error?) -> Void)
 ```
 
 Upload Image
@@ -386,11 +386,11 @@ Upload image to the CDN via the server as proxy
 import OpenAPIClient
 
 let xAltText = "" // String | Alernative text describing the image content
-let xFIleName = "" // String | Name of the original image file
+let xFileName = "" // String | Name of the original image file
 let body = URL(string: "https://example.com")! // URL | 
 
 // Upload Image
-DefaultAPI.imagePost(xAltText: xAltText, xFIleName: xFIleName, body: body) { (response, error) in
+DefaultAPI.imagePost(xAltText: xAltText, xFileName: xFileName, body: body) { (response, error) in
     guard error == nil else {
         print(error)
         return
@@ -407,7 +407,7 @@ DefaultAPI.imagePost(xAltText: xAltText, xFIleName: xFIleName, body: body) { (re
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xAltText** | **String** | Alernative text describing the image content | 
- **xFIleName** | **String** | Name of the original image file | 
+ **xFileName** | **String** | Name of the original image file | 
  **body** | **URL** |  | 
 
 ### Return type
@@ -681,7 +681,7 @@ Name | Type | Description  | Notes
 
 # **updatePut**
 ```swift
-    open class func updatePut(updatePutRequest: UpdatePutRequest, completion: @escaping (_ data: Double?, _ error: Error?) -> Void)
+    open class func updatePut(updatePutRequest: UpdatePutRequest, completion: @escaping (_ data: Int?, _ error: Error?) -> Void)
 ```
 
 Create Update Post
@@ -716,7 +716,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-**Double**
+**Int**
 
 ### Authorization
 
