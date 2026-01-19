@@ -175,7 +175,7 @@ fileprivate struct Editor: View {
 
             if editor.cover != nil {
                 Button("Clear image attachement", systemImage: "clear") {
-                    editor.cover = nil
+                    editor.clearCover()
                 }
             }
         }
@@ -294,6 +294,12 @@ fileprivate final class EditorViewModel: ObservableObject {
         try FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
         try data.write(to: resultingFile)
         cover = resultingFile
+    }
+    
+    func clearCover() {
+        cover = nil
+        alt = ""
+        photoSelection = nil
     }
 }
 
