@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var errorAlertContent: String? = nil
     @State private var pushErrorAlertContent: String? = nil
     @State private var pushState: PushSynchronizeState? = nil
+    @State private var pullState: PullState? = nil
     @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var syncId = 0
 
@@ -28,15 +29,19 @@ struct ContentView: View {
                     #endif
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .bottomStatus(height: pushState != nil ? 50 : 0) {
+                .bottomStatus(height: pushState != nil || pullState != nil ? 50 : 0) {
                     Group {
-                        if let pushState {
+                        if let pullState {
+                            PullStateView(state: pullState) {
+                                pullTrialId += 1
+                            }
+                        } else if let pushState { // only display one of them, which is a design choice
                             PushStateView(state: pushState)
-                                .padding(.horizontal)
-                                .padding(.bottom)
-                                .frame(maxWidth: 280)
                         }
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                    .frame(maxWidth: 280)
                 }
         } detail: {
             if selection.isEmpty {
@@ -75,10 +80,13 @@ struct ContentView: View {
         }
         .task(id: pullTrialId) {
             do {
+                pullState = .pulling
                 let diff = try await items.pullFromBackend()
                 try modelContext.apply(diffPosts: diff)
+                pullState = nil
             } catch let ErrorResponse.error(status, body, response, error) {
                 if error is CancellationError {
+                    pullState = nil
                     return
                 }
                 if let body = body, response?.mimeType == "plain/text" {
@@ -87,9 +95,9 @@ struct ContentView: View {
                     errorAlertContent = error.localizedDescription
                 }
                 print("Update post pulling encountered HTTP \(status)")
+                pullState = .error(error)
             } catch {
-                // shouldn't happen
-                print(error)
+                pullState = .error(error)
             }
         }
         .alert("Could not pull update posts", isPresented: Binding(get: {
@@ -305,6 +313,49 @@ fileprivate struct BottomStatusModifier<C: View>: ViewModifier {
 fileprivate extension View {
     func bottomStatus<C: View>(height: Double, padding: Double = 40, body: @escaping () -> C) -> some View {
         modifier(BottomStatusModifier(body: body, bodyHeight: height, gradientPadding: padding))
+    }
+}
+
+fileprivate enum PullState {
+    case pulling
+    case error(any Error)
+}
+
+fileprivate struct PullStateView : View {
+    let state: PullState
+    let onRetry: () -> Void
+    @State private var error: (any Error)?
+    var body: some View {
+        switch state {
+        case .pulling:
+            VStack {
+                ProgressView()
+                    .progressViewStyle(.linear)
+                Text("Pulling posts...")
+            }
+        case .error(let error):
+            Text("Failed to pull")
+                .alert("Could not pull posts from server", isPresented: Binding(get: {
+                    self.error != nil
+                }, set: { show in
+                    if !show {
+                        self.error = nil
+                    }
+                }), actions: {
+                    Button(role: .cancel) {
+                        self.error = nil
+                    }
+                    Button("Retry") {
+                        self.error = nil
+                        onRetry()
+                    }
+                }, message: {
+                    Text(error.localizedDescription)
+                })
+            Button("Details") {
+                self.error = error
+            }
+        }
     }
 }
 
