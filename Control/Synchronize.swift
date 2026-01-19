@@ -50,21 +50,23 @@ enum PushSynchronizeState: Equatable {
 }
 
 extension [CachedUpdatePost] {
-    func pullFromBackend() async throws -> Diff<CachedUpdatePost> {
-        let posts = Set((try await DefaultAPI.updateListGet()).map(CachedUpdatePost.init))
-        return Diff(old: Set(self), new: posts)
+    func pullFromBackend() async throws -> Diff<UpdatePost> {
+        let posts = Set(try await DefaultAPI.updateListGet())
+        let cache = Set(self.map(UpdatePost.init))
+        return Diff(old: cache, new: posts)
     }
 }
 
 extension ModelContext {
-    func apply(diffPosts: Diff<CachedUpdatePost>) {
+    func apply(diffPosts: Diff<UpdatePost>) throws {
+        let existing = try fetch(FetchDescriptor<CachedUpdatePost>())
         for removal in diffPosts.removal {
-            if removal.id >= 0 {
-                delete(removal)
+            if removal.id >= 0, let item = existing.first(where: {$0.id == removal.id}) {
+                delete(item)
             }
         }
         for addition in diffPosts.addition {
-            insert(addition)
+            insert(CachedUpdatePost(from: addition))
         }
     }
 }

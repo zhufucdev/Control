@@ -5,7 +5,6 @@ import SwiftUI
 struct ContentView: View {
     @State private var pullTrialId = 0
     @State private var selection = Set<PersistentIdentifier>()
-    @State private var targetItem: CachedUpdatePost? = nil
     @State private var errorAlertContent: String? = nil
     @State private var pushErrorAlertContent: String? = nil
     @State private var pushState: PushSynchronizeState? = nil
@@ -40,7 +39,9 @@ struct ContentView: View {
                     }
                 }
         } detail: {
-            if let targetItem {
+            if selection.isEmpty {
+                Text("Select an item")
+            } else if let targetItem = items.first(where: { $0.persistentModelID == selection.first! }) {
                 UpdatePostView(model: targetItem, id: syncId) {
                     Task {
                         do {
@@ -69,13 +70,13 @@ struct ContentView: View {
                     }
                 }
             } else {
-                Text("Select an item")
+                Text("Item was removed. Select another one")
             }
         }
         .task(id: pullTrialId) {
             do {
                 let diff = try await items.pullFromBackend()
-                modelContext.apply(diffPosts: diff)
+                try modelContext.apply(diffPosts: diff)
             } catch let ErrorResponse.error(status, body, response, error) {
                 if error is CancellationError {
                     return
@@ -91,11 +92,6 @@ struct ContentView: View {
                 print(error)
             }
         }
-        .onChange(of: selection, { _, newValue in
-            if let targetId = newValue.first {
-                targetItem = items.first(where: { $0.persistentModelID == targetId })
-            }
-        })
         .alert("Could not pull update posts", isPresented: Binding(get: {
             errorAlertContent != nil
         }, set: { newValue in
@@ -284,7 +280,7 @@ fileprivate struct BottomStatusModifier<C: View>: ViewModifier {
     @ViewBuilder let body: () -> C
     let bodyHeight: Double
     let gradientPadding: Double
-    
+
     func body(content: Content) -> some View {
         if bodyHeight <= 0 {
             content
@@ -307,8 +303,8 @@ fileprivate struct BottomStatusModifier<C: View>: ViewModifier {
 }
 
 fileprivate extension View {
-    func bottomStatus<C : View>(height: Double, padding: Double = 40, body: @escaping () -> C) -> some View {
-        self.modifier(BottomStatusModifier(body: body, bodyHeight: height, gradientPadding: padding))
+    func bottomStatus<C: View>(height: Double, padding: Double = 40, body: @escaping () -> C) -> some View {
+        modifier(BottomStatusModifier(body: body, bodyHeight: height, gradientPadding: padding))
     }
 }
 
