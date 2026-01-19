@@ -20,53 +20,46 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            PostsList(selection: $selection, onSettingsUpdated: onSettingsUpdated)
-                .toolbar {
-                    #if os(iOS)
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            EditButton()
-                        }
-                    #endif
+            PostsList(selection: $selection, onSettingsUpdated: onSettingsUpdated) { item in
+                Task {
+                    await pushSync(targetItem: item)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .bottomStatus(height: pushState != nil || pullState != nil ? 50 : 0) {
-                    Group {
-                        if let pullState {
-                            PullStateView(state: pullState) {
-                                pullTrialId += 1
-                            }
-                        } else if let pushState { // only display one of them, which is a design choice
-                            PushStateView(state: pushState)
-                        }
+            } onDeleteItem: { _ in
+            }
+            .toolbar {
+                #if os(iOS)
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom)
-                    .frame(maxWidth: 280)
+                #endif
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .bottomStatus(height: pushState != nil || pullState != nil ? 50 : 0) {
+                Group {
+                    if let pullState {
+                        PullStateView(state: pullState) {
+                            pullTrialId += 1
+                        }
+                    } else if let pushState { // only display one of them, which is a design choice
+                        PushStateView(state: pushState)
+                    }
                 }
+                .padding(.horizontal)
+                .padding(.bottom)
+                .frame(maxWidth: 280)
+            }
         } detail: {
             if selection.isEmpty {
                 Text("Select an item")
             } else if let targetItem = items.first(where: { $0.persistentModelID == selection.first! }) {
                 UpdatePostView(model: targetItem, id: syncId) {
                     Task {
-                        do {
-                            for try await state in targetItem.pushToBackend() {
-                                pushState = state
-                            }
-                        } catch let ErrorResponse.error(_, body, _, innerError) {
-                            pushErrorAlertContent = innerError.localizedDescription
-                            print("Banckend push sync failed: \(innerError)")
-                            if let body, let bodyText = String(data: body, encoding: .utf8) {
-                                print("\(bodyText)")
-                            }
-                        }
-                        pushState = nil
-                        syncId += 1
+                        await pushSync(targetItem: targetItem)
                     }
                 }
-                .bottomStatus(height: pushState != nil && columnVisibility == .detailOnly ? 50 : 0) {
+                .bottomStatus(height: 50) {
                     Group {
-                        if let pushState {
+                        if let pushState, columnVisibility == .detailOnly {
                             PushStateView(state: pushState)
                                 .padding(.horizontal)
                                 .padding(.bottom)
@@ -135,11 +128,40 @@ struct ContentView: View {
             }
         })
     }
+
+    private func pushSync(targetItem: CachedUpdatePost) async {
+        do {
+            for try await state in targetItem.pushToBackend() {
+                pushState = state
+            }
+        } catch let ErrorResponse.error(_, body, _, innerError) {
+            pushErrorAlertContent = innerError.localizedDescription
+            print("Banckend push sync failed: \(innerError)")
+            if let body, let bodyText = String(data: body, encoding: .utf8) {
+                print("\(bodyText)")
+            }
+        } catch {
+            pushErrorAlertContent = error.localizedDescription
+        }
+        pushState = nil
+        syncId += 1
+    }
+
+    private func pushDelete(id: Int) async {
+        do {
+            _ = try await DefaultAPI.updateIdDelete(id: id)
+        } catch {
+            pushErrorAlertContent = error.localizedDescription
+            print("Backend delete failed: \(error)")
+        }
+    }
 }
 
 struct PostsList: View {
     @Binding var selection: Set<PersistentIdentifier>
     let onSettingsUpdated: (SettingsUpdate?) -> Void
+    let onTrashItem: (CachedUpdatePost) -> Void
+    let onDeleteItem: (CachedUpdatePost) -> Void
 
     @Environment(\.modelContext) private var modelContext
     #if os(iOS)
@@ -236,6 +258,7 @@ struct PostsList: View {
         withAnimation {
             for item in items {
                 item.trashed = true
+                onTrashItem(item)
             }
         }
     }
@@ -244,6 +267,7 @@ struct PostsList: View {
         withAnimation {
             for item in items {
                 item.trashed = false
+                onTrashItem(item)
             }
         }
     }
@@ -251,6 +275,7 @@ struct PostsList: View {
     private func deleteItems<S>(_ items: S) where S: Sequence, S.Element == CachedUpdatePost {
         withAnimation {
             for item in items {
+                onDeleteItem(item)
                 modelContext.delete(item)
             }
         }
@@ -290,23 +315,11 @@ fileprivate struct BottomStatusModifier<C: View>: ViewModifier {
     let gradientPadding: Double
 
     func body(content: Content) -> some View {
-        if bodyHeight <= 0 {
-            content
-        } else {
-            GeometryReader { surface in
-                content.mask(
-                    LinearGradient(
-                        colors: [.black, .clear],
-                        startPoint: UnitPoint(x: 0, y: (surface.size.height - gradientPadding - bodyHeight) / surface.size.height),
-                        endPoint: UnitPoint(x: 0, y: 1 - bodyHeight / surface.size.height)
-                    )
-                )
-            }
+        content
             .overlay(alignment: .bottom) {
                 body()
                     .frame(height: bodyHeight)
             }
-        }
     }
 }
 
@@ -321,7 +334,7 @@ fileprivate enum PullState {
     case error(any Error)
 }
 
-fileprivate struct PullStateView : View {
+fileprivate struct PullStateView: View {
     let state: PullState
     let onRetry: () -> Void
     @State private var error: (any Error)?
@@ -333,7 +346,7 @@ fileprivate struct PullStateView : View {
                     .progressViewStyle(.linear)
                 Text("Pulling posts...")
             }
-        case .error(let error):
+        case let .error(error):
             Text("Failed to pull")
                 .alert("Could not pull posts from server", isPresented: Binding(get: {
                     self.error != nil
