@@ -19,7 +19,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
-            PostsList(selection: $selection, pushState: pushState, onSettingsUpdated: onSettingsUpdated)
+            PostsList(selection: $selection, onSettingsUpdated: onSettingsUpdated)
                 .toolbar {
                     #if os(iOS)
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -28,23 +28,41 @@ struct ContentView: View {
                     #endif
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .bottomStatus(height: pushState != nil ? 50 : 0) {
+                    Group {
+                        if let pushState {
+                            PushStateView(state: pushState)
+                                .padding(.horizontal)
+                                .padding(.bottom)
+                                .frame(maxWidth: 280)
+                        }
+                    }
+                }
         } detail: {
             if let targetItem {
-                GeometryReader { surface in
-                    UpdatePostView(model: targetItem) {
-                        Task {
-                            do {
-                                for try await state in targetItem.pushToBackend() {
-                                    pushState = state
-                                }
-                            } catch let ErrorResponse.error(_, body, _, innerError) {
-                                pushErrorAlertContent = innerError.localizedDescription
-                                print("Banckend push sync failed: \(innerError)")
-                                if let body, let bodyText = String(data: body, encoding: .utf8) {
-                                    print("\(bodyText)")
-                                }
+                UpdatePostView(model: targetItem) {
+                    Task {
+                        do {
+                            for try await state in targetItem.pushToBackend() {
+                                pushState = state
                             }
-                            pushState = nil
+                        } catch let ErrorResponse.error(_, body, _, innerError) {
+                            pushErrorAlertContent = innerError.localizedDescription
+                            print("Banckend push sync failed: \(innerError)")
+                            if let body, let bodyText = String(data: body, encoding: .utf8) {
+                                print("\(bodyText)")
+                            }
+                        }
+                        pushState = nil
+                    }
+                }
+                .bottomStatus(height: pushState != nil && columnVisibility == .detailOnly ? 50 : 0) {
+                    Group {
+                        if let pushState {
+                            PushStateView(state: pushState)
+                                .padding(.horizontal)
+                                .padding(.bottom)
+                                .frame(maxWidth: 280)
                         }
                     }
                 }
@@ -110,21 +128,11 @@ struct ContentView: View {
                 Text(content)
             }
         })
-        .toolbar {
-            if let pushState, columnVisibility == .detailOnly {
-                ToolbarItem(placement: .status) {
-                    PushStateView(state: pushState)
-                        .padding(.horizontal)
-                        .padding(.bottom)
-                }
-            }
-        }
     }
 }
 
 struct PostsList: View {
     @Binding var selection: Set<PersistentIdentifier>
-    let pushState: PushSynchronizeState?
     let onSettingsUpdated: (SettingsUpdate?) -> Void
 
     @Environment(\.modelContext) private var modelContext
@@ -165,10 +173,6 @@ struct PostsList: View {
                         }
                     }
                 }
-            }
-            if let pushState {
-                PushStateView(state: pushState)
-                    .padding(.top, 42)
             }
         }
         .animation(.spring, value: items)
@@ -214,7 +218,7 @@ struct PostsList: View {
             }
         #endif
     }
-    
+
     private func addItem() {
         withAnimation {
             let newItem = CachedUpdatePost()
@@ -252,7 +256,7 @@ struct PushStateView: View {
     var body: some View {
         Group {
             switch state {
-            case .uploadingImage(let progress):
+            case let .uploadingImage(progress):
                 VStack {
                     ProgressView(value: progress)
                     Text("Uploading image...")
@@ -271,6 +275,38 @@ struct PushStateView: View {
                 }
             }
         }
+    }
+}
+
+fileprivate struct BottomStatusModifier<C: View>: ViewModifier {
+    @ViewBuilder let body: () -> C
+    let bodyHeight: Double
+    let gradientPadding: Double
+    
+    func body(content: Content) -> some View {
+        if bodyHeight <= 0 {
+            content
+        } else {
+            GeometryReader { surface in
+                content.mask(
+                    LinearGradient(
+                        colors: [.black, .clear],
+                        startPoint: UnitPoint(x: 0, y: (surface.size.height - gradientPadding - bodyHeight) / surface.size.height),
+                        endPoint: UnitPoint(x: 0, y: 1 - bodyHeight / surface.size.height)
+                    )
+                )
+            }
+            .overlay(alignment: .bottom) {
+                body()
+                    .frame(height: bodyHeight)
+            }
+        }
+    }
+}
+
+fileprivate extension View {
+    func bottomStatus<C : View>(height: Double, padding: Double = 40, body: @escaping () -> C) -> some View {
+        self.modifier(BottomStatusModifier(body: body, bodyHeight: height, gradientPadding: padding))
     }
 }
 
