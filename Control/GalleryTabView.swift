@@ -131,7 +131,7 @@ struct GalleryTabView: View {
                 }
         } placeholder: {
             ProgressView()
-                .frame(width: 42)
+                .frame(width: 42, height: 300)
         }
         .clipped()
         .contextMenu {
