@@ -48,7 +48,7 @@ enum PushSynchronizeState: Equatable {
 extension [CachedUpdatePost] {
     func pullFromBackend() async throws -> Diff<UpdatePost> {
         let posts = Set(try await DefaultAPI.updateListGet())
-        let cache = Set(self.map(UpdatePost.init))
+        let cache = Set(map(UpdatePost.init))
         return Diff(old: cache, new: posts)
     }
 }
@@ -57,7 +57,7 @@ extension ModelContext {
     func apply(diffPosts: Diff<UpdatePost>) throws {
         let existing = try fetch(FetchDescriptor<CachedUpdatePost>())
         for removal in diffPosts.removal {
-            if removal.id >= 0, let item = existing.first(where: {$0.id == removal.id}) {
+            if removal.id >= 0, let item = existing.first(where: { $0.id == removal.id }) {
                 delete(item)
             }
         }
@@ -65,11 +65,11 @@ extension ModelContext {
             insert(CachedUpdatePost(from: addition))
         }
     }
-    
+
     func apply(diffGallery: Diff<GalleryItem>) throws {
         let existing = try fetch(FetchDescriptor<CachedGalleryItem>())
         for removal in diffGallery.removal {
-            if removal.id >= 0, let item = existing.first(where: {$0.id == removal.id}) {
+            if removal.id >= 0, let item = existing.first(where: { $0.id == removal.id }) {
                 delete(item)
             }
         }
@@ -86,7 +86,7 @@ enum PullSynchronizeState {
 extension [CachedGalleryItem] {
     func pullFromBackend() async throws -> Diff<GalleryItem> {
         let gallery = Set(try await DefaultAPI.galleryListGet())
-        let cache = Set(self.map(GalleryItem.init))
+        let cache = Set(map(GalleryItem.init))
         return Diff(old: cache, new: gallery)
     }
 }
@@ -100,7 +100,9 @@ extension CachedGalleryItem {
                     if self.draft {
                         stream.yield(.uploadingImage(progress: 0))
                         guard let fileUrl = URL(string: self.image) else { throw URLError(.badURL) }
-                        let uploadedImage = try await DefaultAPI.imagePost(xAltText: self.alt, xFileName: fileUrl.lastPathComponent, body: fileUrl)
+                        let escapedAltText = self.alt.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self.alt
+                        let escapedFileName = fileUrl.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileUrl.lastPathComponent
+                        let uploadedImage = try await DefaultAPI.imagePost(xAltText: escapedAltText, xFileName: escapedFileName, body: fileUrl)
                         do {
                             try FileManager.default.removeItem(at: fileUrl)
                         } catch {
@@ -118,7 +120,7 @@ extension CachedGalleryItem {
                         let updateRequest = GalleryIdPatchRequest(locale: self.locale, tweet: self.tweet, trashed: self.trashed)
                         _ = try await DefaultAPI.galleryIdPatch(id: self.id, galleryIdPatchRequest: updateRequest)
                     }
-                    
+
                     stream.finish()
                 } catch {
                     stream.finish(throwing: error)

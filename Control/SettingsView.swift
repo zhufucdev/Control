@@ -65,11 +65,11 @@ fileprivate final class DebouncedStringObservable: ObservableObject {
     @Published var content: String
     @Published var debounced: String
     private var subscriptions = Set<AnyCancellable>()
-    
+
     init(content: String) {
         self.content = content
-        self.debounced = content
-        
+        debounced = content
+
         $content
             .debounce(for: .seconds(1), scheduler: RunLoop.current)
             .sink { [weak self] value in

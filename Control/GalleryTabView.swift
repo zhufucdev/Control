@@ -171,6 +171,9 @@ struct GalleryTabView: View {
         } catch {
             pushErrorAlertContent = error
             print("Error pushing: \(error)")
+            if let response = error as? ErrorResponse, case let .error(int, data, uRLResponse, error) = response, let data {
+                print("body: \(String(data: data, encoding: .utf8)!)")
+            }
         }
         pushState = nil
     }
