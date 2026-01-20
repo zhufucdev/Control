@@ -3,4 +3,66 @@
    uuid = "F0DEBB68-A7EF-4DCA-A11B-81E02F9F37CC"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "EF8CD7C2-4B16-47D9-80B5-E442EF72F98C"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Control/Synchronize.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "11"
+            endingLineNumber = "11"
+            landmarkName = "pushToBackend()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "EF8CD7C2-4B16-47D9-80B5-E442EF72F98C - 21f17f7b1436beb1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in closure #1 (Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;.Continuation) -&gt; () in Control.CachedUpdatePost.pushToBackend() -&gt; Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;"
+                  moduleName = "Control.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/zhufu/Source/Swift/Control/Control/Synchronize.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "11"
+                  endingLineNumber = "11">
+               </Location>
+               <Location
+                  uuid = "EF8CD7C2-4B16-47D9-80B5-E442EF72F98C - 21f17f7b1436beb1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in closure #1 (Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;.Continuation) -&gt; () in Control.CachedUpdatePost.pushToBackend() -&gt; Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;"
+                  moduleName = "Control.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/zhufu/Source/Swift/Control/Control/Synchronize.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "11"
+                  endingLineNumber = "11">
+               </Location>
+               <Location
+                  uuid = "EF8CD7C2-4B16-47D9-80B5-E442EF72F98C - 21f17f7b1436beb1"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in closure #1 (Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;.Continuation) -&gt; () in Control.CachedUpdatePost.pushToBackend() -&gt; Swift.AsyncThrowingStream&lt;Control.PushSynchronizeState, Swift.Error&gt;"
+                  moduleName = "Control.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/zhufu/Source/Swift/Control/Control/Synchronize.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "11"
+                  endingLineNumber = "11">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

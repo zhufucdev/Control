@@ -324,7 +324,7 @@ fileprivate final class EditorViewModel: ObservableObject {
             }
         }
         if let cover {
-            if let oldCover = to.cover, oldCover.image != cover.absoluteString {
+            if to.cover?.image != cover.absoluteString {
                 to.cover = .init(image: cover.absoluteString, alt: alt, id: 0)
             }
             // do nothing otherwise
