@@ -90,11 +90,13 @@ fileprivate enum ViewState {
 }
 
 fileprivate struct Editor: View {
+    @Environment(\.horizontalSizeClass) private var screenWidth
+
     @StateObject var editor: EditorViewModel
     let model: CachedUpdatePost
     let takePhoto: () -> Void
     let onSave: () -> Void
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 8) {
@@ -130,8 +132,15 @@ fileprivate struct Editor: View {
                     attachmentToolbarItems
                 }
             #else
-                ToolbarItemGroup(placement: .bottomBar) {
-                    attachmentToolbarItems
+                switch screenWidth {
+                case .regular:
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        attachmentToolbarItems
+                    }
+                default:
+                    ToolbarItemGroup {
+                        attachmentToolbarItems
+                    }
                 }
             #endif
 
@@ -184,7 +193,7 @@ fileprivate struct Editor: View {
             #if os(iOS)
                 Button("Take photos", systemImage: "camera", action: takePhoto)
             #endif
-            
+
             if editor.cover != nil {
                 Button("Clear image attachement", systemImage: "clear") {
                     editor.clearCover()
@@ -245,10 +254,9 @@ fileprivate final class EditorViewModel: ObservableObject {
                 Task {
                     do {
                         if let image = try await photoSelection.loadTransferable(type: DataUrl.self) {
-                            if !(await ensureAltText()) {
-                                return
+                            if await ensureAltText() {
+                                cover = image.url
                             }
-                            cover = image.url
                         } else {
                             print("No suitable conversion found from PhotosPickerItem to DataUrl")
                         }
@@ -276,7 +284,7 @@ fileprivate final class EditorViewModel: ObservableObject {
     }
 
     @Published var altTextEditingChannel: AsyncChannel<Optional<String>>? = nil
-    
+
     @Published var locale: SupportedLocale = .en {
         didSet {
             notifyEditing()
@@ -333,7 +341,6 @@ fileprivate final class EditorViewModel: ObservableObject {
         }
     }
 
-    
     private func ensureAltText() async -> Bool {
         let channel = AsyncChannel<Optional<String>>()
         altTextEditingChannel = channel
@@ -349,16 +356,15 @@ fileprivate final class EditorViewModel: ObservableObject {
         }
         return false
     }
-    
+
     func attachImage(filename: String, data: Data) async throws {
-        if !(await ensureAltText()) {
-            return
+        if await ensureAltText() {
+            let resultingFile = try await getUniqueDocumentURL(filename: filename)
+            try data.write(to: resultingFile)
+            cover = resultingFile
         }
-        let resultingFile = try await getUniqueDocumentURL(filename: filename)
-        try data.write(to: resultingFile)
-        cover = resultingFile
     }
-    
+
     func clearCover() {
         cover = nil
         alt = ""
