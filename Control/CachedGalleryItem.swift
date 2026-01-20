@@ -31,3 +31,9 @@ final class CachedGalleryItem {
         self.init(id: -1, image: "", alt: "", created: Date(), trashed: false)
     }
 }
+
+extension GalleryItem {
+    init(cache: CachedGalleryItem) {
+        self.init(id: cache.id, locale: cache.locale, tweet: cache.tweet, image: cache.image, created: cache.created, alt: cache.alt, trashed: cache.trashed)
+    }
+}

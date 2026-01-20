@@ -65,8 +65,28 @@ extension ModelContext {
             insert(CachedUpdatePost(from: addition))
         }
     }
+    
+    func apply(diffGallery: Diff<GalleryItem>) throws {
+        let existing = try fetch(FetchDescriptor<CachedGalleryItem>())
+        for removal in diffGallery.removal {
+            if removal.id >= 0, let item = existing.first(where: {$0.id == removal.id}) {
+                delete(item)
+            }
+        }
+        for addition in diffGallery.addition {
+            insert(CachedGalleryItem(from: addition))
+        }
+    }
 }
 
 enum PullSynchronizeState {
     case downloadingContent
+}
+
+extension [CachedGalleryItem] {
+    func pullFromBackend() async throws -> Diff<GalleryItem> {
+        let gallery = Set(try await DefaultAPI.galleryListGet())
+        let cache = Set(self.map(GalleryItem.init))
+        return Diff(old: cache, new: gallery)
+    }
 }

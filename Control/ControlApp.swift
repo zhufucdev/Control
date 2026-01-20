@@ -112,9 +112,16 @@ struct ControlApp: App {
             case .uninitialized:
                 LandingView(onSubmit: onLandingSubmitted)
             case let .ready(endpoint, postAuthKey, mainSite):
-                ContentView(onSettingsUpdated: { update in
-                    onSettingsUpdated(update: update)
-                })
+                TabView {
+                    Tab("Updates", systemImage: "text.rectangle.page.fill") {
+                        UpdateTabView(onSettingsUpdated: { update in
+                            onSettingsUpdated(update: update)
+                        })
+                    }
+                    Tab("Gallery", systemImage: "photo.on.rectangle.angled") {
+                        GalleryTabView()
+                    }
+                }
                 .environment(\.postAuthKey, postAuthKey)
                 .environment(\.endpointBaseUrl, endpoint)
                 .environment(\.mainSiteUrl, mainSite)

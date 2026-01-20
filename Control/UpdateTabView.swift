@@ -2,10 +2,9 @@ import OpenAPIClient
 import SwiftData
 import SwiftUI
 
-struct ContentView: View {
+struct UpdateTabView: View {
     @State private var pullTrialId = 0
     @State private var selection = Set<PersistentIdentifier>()
-    @State private var errorAlertContent: String? = nil
     @State private var pushErrorAlertContent: String? = nil
     @State private var pushState: PushSynchronizeState? = nil
     @State private var pullState: PullState? = nil
@@ -24,7 +23,10 @@ struct ContentView: View {
                 Task {
                     await pushSync(targetItem: item)
                 }
-            } onDeleteItem: { _ in
+            } onDeleteItem: { item in
+                Task {
+                    await pushDelete(id: item.id)
+                }
             }
             .toolbar {
                 #if os(iOS)
@@ -77,41 +79,17 @@ struct ContentView: View {
                 let diff = try await items.pullFromBackend()
                 try modelContext.apply(diffPosts: diff)
                 pullState = nil
-            } catch let ErrorResponse.error(status, body, response, error) {
+            } catch let ErrorResponse.error(status, _, _, error) {
                 if error is CancellationError {
                     pullState = nil
                     return
                 }
-                if let body = body, response?.mimeType == "plain/text" {
-                    errorAlertContent = String(data: body, encoding: .utf8)
-                } else {
-                    errorAlertContent = error.localizedDescription
-                }
-                print("Update post pulling encountered HTTP \(status)")
+                print("Update post pulling encountered an error: \(error)")
                 pullState = .error(error)
             } catch {
                 pullState = .error(error)
             }
         }
-        .alert("Could not pull update posts", isPresented: Binding(get: {
-            errorAlertContent != nil
-        }, set: { newValue in
-            if !newValue {
-                errorAlertContent = nil
-            }
-        }), actions: {
-            Button(role: .cancel) {
-                errorAlertContent = nil
-            }
-            Button("Retry") {
-                pullTrialId += 1
-                errorAlertContent = nil
-            }
-        }, message: {
-            if let content = errorAlertContent {
-                Text(content)
-            }
-        })
         .alert("Could not push update post", isPresented: Binding(get: {
             pushErrorAlertContent != nil
         }, set: { newValue in
@@ -366,33 +344,43 @@ fileprivate struct PullStateView: View {
                 Text("Pulling posts...")
             }
         case let .error(error):
-            Text("Failed to pull")
-                .alert("Could not pull posts from server", isPresented: Binding(get: {
-                    self.error != nil
-                }, set: { show in
-                    if !show {
-                        self.error = nil
-                    }
-                }), actions: {
-                    Button(role: .cancel) {
-                        self.error = nil
-                    }
-                    Button("Retry") {
-                        self.error = nil
-                        onRetry()
-                    }
-                }, message: {
-                    Text(error.localizedDescription)
-                })
-            Button("Details") {
-                self.error = error
+            HStack {
+                Text("Failed to pull...")
+                    .alert("Could not pull posts from server", isPresented: Binding(get: {
+                        self.error != nil
+                    }, set: { show in
+                        if !show {
+                            self.error = nil
+                        }
+                    }), actions: {
+                        Button(role: .cancel) {
+                            self.error = nil
+                        }
+                        Button("Retry") {
+                            self.error = nil
+                            onRetry()
+                        }
+                    }, message: {
+                        if let error = self.error as? ErrorResponse,
+                           case let .error(_, body, response, _) = error,
+                           let body, response?.mimeType == "plain/text" {
+                            Text(String(data: body, encoding: .utf8)!)
+                        } else {
+                            Text(error.localizedDescription)
+                        }
+                    })
+                Button("details") {
+                    self.error = error
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Color.accentColor)
             }
         }
     }
 }
 
 #Preview {
-    ContentView { _ in }
+    UpdateTabView { _ in }
         .modelContainer(for: CachedUpdatePost.self, inMemory: true)
         .modelContainer(for: CachedGalleryItem.self, inMemory: true)
 }
