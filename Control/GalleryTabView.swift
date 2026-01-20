@@ -1,5 +1,4 @@
 import CachedAsyncImage
-import Flow
 import Foundation
 import OpenAPIClient
 import SwiftData
@@ -11,7 +10,7 @@ struct GalleryTabView: View {
     @Query(sort: \CachedGalleryItem.created, order: .reverse)
     private var items: [CachedGalleryItem]
 
-    @State private var pullState: PullSynchronizeState? = nil
+    @State private var pullState: PullState? = nil
     @State private var pullTrialId = 0
 
     private let threeColumns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
@@ -46,13 +45,29 @@ struct GalleryTabView: View {
                     .clipped()
                 }
             }
-            .padding()
-            .task(id: pullTrialId) {
-                do {
-                    let diff = try await items.pullFromBackend()
-                    try modelContext.apply(diffGallery: diff)
-                } catch {
+            .padding(.horizontal)
+        }
+        .frame(maxHeight: .infinity)
+        .bottomStatus(height: pullState != nil ? 50 : 0) {
+            Group {
+                if let pullState {
+                    PullStateView(state: pullState) {
+                        pullTrialId += 1
+                    }
                 }
+            }
+            .padding(.horizontal)
+            .padding(.bottom)
+            .frame(maxWidth: 280)
+        }
+        .task(id: pullTrialId) {
+            do {
+                pullState = .pulling
+                let diff = try await items.pullFromBackend()
+                try modelContext.apply(diffGallery: diff)
+                pullState = nil
+            } catch {
+                pullState = .error(error)
             }
         }
     }
