@@ -105,7 +105,7 @@ fileprivate struct Editor: View {
                 TextField("Header", text: $editor.header)
                     .textFieldStyle(.plain)
                     .padding(.horizontal)
-                TextField("Tweet", text: $editor.summary)
+                TextField("Tweet", text: $editor.summary, axis: .vertical)
                     .textFieldStyle(.plain)
                     .frame(minHeight: 100, alignment: .top)
                     .padding(.horizontal)
