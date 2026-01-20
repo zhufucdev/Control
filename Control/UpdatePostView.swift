@@ -463,6 +463,9 @@ fileprivate struct UpdatePostPreview: View {
                 }
                 templateCahce.webPage = page
 
+                if !page.backForwardList.backList.isEmpty {
+                    page.load(page.backForwardList.backList.last!) // save memory
+                }
                 page.load(Data(processedData.utf8), mimeType: "text/html", characterEncoding: .utf8, baseURL: URL(string: "\(OpenAPIClientAPIConfiguration.shared.basePath)/api/update/template")!)
                 #if DEBUG
                     page.isInspectable = true
@@ -489,8 +492,8 @@ fileprivate struct UpdatePostPreview: View {
 }
 
 fileprivate class TemplateCache: ObservableObject {
-    var source: String?
-    var webPage: WebPage?
+    @Published var source: String?
+    @Published var webPage: WebPage?
 }
 
 #Preview {
