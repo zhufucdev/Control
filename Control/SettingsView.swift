@@ -41,8 +41,14 @@ struct SettingsView: View {
             Section("Backend") {
                 TextField("Main Site URL", text: $mainSiteUrl)
                     .autocorrectionDisabled()
+                #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                #endif
                 TextField("Endpoint Base URL", text: $endpointBaseUrl)
                     .autocorrectionDisabled()
+                #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                #endif
                     .onChange(of: mainSiteUrl) { oldValue, newValue in
                         if !endpointBaseUrl.starts(with: oldValue) {
                             return
