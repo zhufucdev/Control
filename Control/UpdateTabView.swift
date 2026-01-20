@@ -281,6 +281,7 @@ struct PostsList: View {
             var post = UpdatePost(cache: item)
             post.id = -1
             modelContext.insert(CachedUpdatePost(from: post))
+            try? modelContext.save()
         }
     }
 }
