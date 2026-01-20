@@ -20,10 +20,16 @@ struct UpdateTabView: View {
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             PostsList(selection: $selection, onSettingsUpdated: onSettingsUpdated) { item in
+                if item.draft {
+                    return
+                }
                 Task {
                     await pushSync(targetItem: item)
                 }
             } onDeleteItem: { item in
+                if item.draft {
+                    return
+                }
                 Task {
                     await pushDelete(id: item.id)
                 }
