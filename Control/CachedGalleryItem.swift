@@ -11,6 +11,10 @@ final class CachedGalleryItem {
     var alt: String
     var created: Date
     var trashed: Bool
+    
+    var draft: Bool {
+        id < 0
+    }
 
     init(id: Int, locale: SupportedLocale? = nil, tweet: String? = nil, image: String, alt: String, created: Date, trashed: Bool) {
         self.created = created

@@ -9,14 +9,13 @@ import Foundation
 
 public struct GalleryPutRequest: Sendable, Codable, ParameterConvertible, Hashable {
 
-    /** Target locale, null if global */
-    public var locale: String?
+    public var locale: SupportedLocale?
     /** Comment on this item */
     public var tweet: String?
     /** Image identifier */
     public var imageId: Int
 
-    public init(locale: String?, tweet: String?, imageId: Int) {
+    public init(locale: SupportedLocale?, tweet: String?, imageId: Int) {
         self.locale = locale
         self.tweet = tweet
         self.imageId = imageId

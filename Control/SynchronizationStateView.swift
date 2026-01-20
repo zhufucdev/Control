@@ -54,3 +54,31 @@ enum PullState {
     case pulling
     case error(any Error)
 }
+
+struct PushStateView: View {
+    let state: PushSynchronizeState
+    var body: some View {
+        Group {
+            switch state {
+            case let .uploadingImage(progress):
+                VStack {
+                    ProgressView(value: progress)
+                    Text("Uploading image...")
+                }
+            case .updatingContent:
+                VStack {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text("Updating post...")
+                }
+            case .creatingContent:
+                VStack {
+                    ProgressView()
+                        .progressViewStyle(.linear)
+                    Text("Creating post...")
+                }
+            }
+        }
+    }
+}
+

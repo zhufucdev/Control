@@ -90,3 +90,40 @@ extension [CachedGalleryItem] {
         return Diff(old: cache, new: gallery)
     }
 }
+
+extension CachedGalleryItem {
+    @MainActor
+    func pushToBackend() -> AsyncThrowingStream<PushSynchronizeState, any Error> {
+        return AsyncThrowingStream { stream in
+            Task {
+                do {
+                    if self.draft {
+                        stream.yield(.uploadingImage(progress: 0))
+                        guard let fileUrl = URL(string: self.image) else { throw URLError(.badURL) }
+                        let uploadedImage = try await DefaultAPI.imagePost(xAltText: self.alt, xFileName: fileUrl.lastPathComponent, body: fileUrl)
+                        do {
+                            try FileManager.default.removeItem(at: fileUrl)
+                        } catch {
+                            print("Warning: failed to delete uploaded gallery image")
+                            print(error)
+                        }
+                        self.image = uploadedImage.url
+
+                        stream.yield(.creatingContent)
+                        let createRequest = GalleryPutRequest(locale: self.locale, tweet: self.tweet, imageId: uploadedImage.id)
+                        let postId = try await DefaultAPI.galleryPut(galleryPutRequest: createRequest)
+                        self.id = postId
+                    } else {
+                        stream.yield(.updatingContent)
+                        let updateRequest = GalleryIdPatchRequest(locale: self.locale, tweet: self.tweet, trashed: self.trashed)
+                        _ = try await DefaultAPI.galleryIdPatch(id: self.id, galleryIdPatchRequest: updateRequest)
+                    }
+                    
+                    stream.finish()
+                } catch {
+                    stream.finish(throwing: error)
+                }
+            }
+        }
+    }
+}

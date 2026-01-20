@@ -239,7 +239,7 @@ Create Gallery Item
 // The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
 import OpenAPIClient
 
-let galleryPutRequest = _gallery_put_request(locale: "locale_example", tweet: "tweet_example", imageId: 123) // GalleryPutRequest | 
+let galleryPutRequest = _gallery_put_request(locale: SupportedLocale(), tweet: "tweet_example", imageId: 123) // GalleryPutRequest | 
 
 // Create Gallery Item
 DefaultAPI.galleryPut(galleryPutRequest: galleryPutRequest) { (response, error) in

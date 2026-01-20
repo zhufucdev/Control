@@ -167,23 +167,15 @@ fileprivate struct Editor: View {
             preferredItemEncoding: .current,
             photoLibrary: .shared()
         )
-        .alert("Alternative text", isPresented: Binding(get: {
+        .altTextAlert(isPresented: Binding(get: {
             editor.altTextEditingChannel != nil
         }, set: { open in
             if !open {
                 editor.altTextEditingChannel = nil
             }
-        }), presenting: editor.altTextEditingChannel, actions: { tx in
-            TextField("Describe this image in brief", text: $editor.alt)
-            Button(role: .cancel) {
-                Task {
-                    await tx.send(.none)
-                }
-            }
-            Button(role: .confirm) {
-                Task {
-                    await tx.send(.some(editor.alt))
-                }
+        }), initialText: editor.alt, updateText: { newValue in
+            Task {
+                await editor.altTextEditingChannel?.send(newValue)
             }
         })
         .frame(maxHeight: .infinity, alignment: .top)
@@ -280,7 +272,7 @@ fileprivate final class EditorViewModel: ObservableObject {
         }
     }
 
-    @Published var alt: String = "" {
+    @Published private(set) var alt: String = "" {
         didSet {
             notifyEditing()
         }
@@ -367,18 +359,6 @@ fileprivate final class EditorViewModel: ObservableObject {
         cover = nil
         alt = ""
         photoSelection = nil
-    }
-}
-
-struct DataUrl: Transferable {
-    let url: URL
-
-    static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .data) { data in
-            SentTransferredFile(data.url)
-        } importing: { received in
-            Self(url: received.file)
-        }
     }
 }
 

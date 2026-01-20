@@ -10,6 +10,7 @@
 		6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 6A73688D2F19BDB20065A581 /* KeychainAccess */; };
 		6A7368932F19C17B0065A581 /* OpenAPIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 6A7368922F19C17B0065A581 /* OpenAPIClient */; };
 		6A7421352F1F0A090098E949 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 6A7421342F1F0A090098E949 /* CachedAsyncImage */; };
+		6A74213D2F1F2B2B0098E949 /* DataUrl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A74213C2F1F2B2B0098E949 /* DataUrl.swift */; };
 		6A8D1DAD2F1C9EA500144E1C /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */; };
 		6AB4EADD2F1A805700E17383 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADC2F1A805700E17383 /* SDWebImageSwiftUI */; };
 		6AB4EAE02F1A82A000E17383 /* SDWebImageSVGCoder in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADF2F1A82A000E17383 /* SDWebImageSVGCoder */; };
@@ -37,6 +38,7 @@
 		6A7368672F19B3CE0065A581 /* ControlTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ControlTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A7368712F19B3CE0065A581 /* ControlUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ControlUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6A7368902F19C05A0065A581 /* ApiClient */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = ApiClient; sourceTree = "<group>"; };
+		6A74213C2F1F2B2B0098E949 /* DataUrl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataUrl.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -110,6 +112,7 @@
 				6A7368742F19B3CE0065A581 /* ControlUITests */,
 				6A7368912F19C17B0065A581 /* Frameworks */,
 				6A7368572F19B3CC0065A581 /* Products */,
+				6A74213C2F1F2B2B0098E949 /* DataUrl.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -288,6 +291,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6A74213D2F1F2B2B0098E949 /* DataUrl.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

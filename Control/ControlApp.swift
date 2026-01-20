@@ -55,34 +55,6 @@ struct ControlApp: App {
         Task(priority: .high) {
             try? await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
             OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
-            await withTaskGroup { tg in
-                tg.addTask {
-                    do {
-                        let gallery = try await DefaultAPI.galleryListGet()
-                        DispatchQueue.main.async {
-                            for item in gallery {
-                                sharedModelContainer.mainContext.insert(CachedGalleryItem(from: item))
-                            }
-                        }
-                    } catch {
-                        // TODO: show a message
-                    }
-                }
-                tg.addTask {
-                    do {
-                        let posts = try await DefaultAPI.updateListGet()
-                        DispatchQueue.main.async {
-                            for post in posts {
-                                sharedModelContainer.mainContext.insert(CachedUpdatePost(from: post))
-                            }
-                        }
-                    } catch {
-                        // TODO: show a message
-                    }
-                }
-
-                await tg.waitForAll()
-            }
             appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
         }
     }

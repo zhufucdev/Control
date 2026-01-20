@@ -79,7 +79,7 @@ struct UpdateTabView: View {
                 let diff = try await items.pullFromBackend()
                 try modelContext.apply(diffPosts: diff)
                 pullState = nil
-            } catch let ErrorResponse.error(status, _, _, error) {
+            } catch let ErrorResponse.error(_, _, _, error) {
                 if error is CancellationError {
                     pullState = nil
                     return
@@ -275,33 +275,6 @@ struct PostsList: View {
             var post = UpdatePost(cache: item)
             post.id = -1
             modelContext.insert(CachedUpdatePost(from: post))
-        }
-    }
-}
-
-struct PushStateView: View {
-    let state: PushSynchronizeState
-    var body: some View {
-        Group {
-            switch state {
-            case let .uploadingImage(progress):
-                VStack {
-                    ProgressView(value: progress)
-                    Text("Uploading image...")
-                }
-            case .updatingContent:
-                VStack {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                    Text("Updating post...")
-                }
-            case .creatingContent:
-                VStack {
-                    ProgressView()
-                        .progressViewStyle(.linear)
-                    Text("Creating post...")
-                }
-            }
         }
     }
 }
