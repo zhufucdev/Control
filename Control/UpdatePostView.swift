@@ -94,7 +94,7 @@ fileprivate struct Editor: View {
     let model: CachedUpdatePost
     let takePhoto: () -> Void
     let onSave: () -> Void
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 8) {
@@ -167,13 +167,7 @@ fileprivate struct Editor: View {
             preferredItemEncoding: .current,
             photoLibrary: .shared()
         )
-        .altTextAlert(isPresented: Binding(get: {
-            editor.altTextEditingChannel != nil
-        }, set: { open in
-            if !open {
-                editor.altTextEditingChannel = nil
-            }
-        }), initialText: editor.alt, updateText: { newValue in
+        .altTextAlert(isPresented: $editor.isEditingAltText, initialText: editor.alt, updateText: { newValue in
             Task {
                 await editor.altTextEditingChannel?.send(newValue)
             }
@@ -251,7 +245,10 @@ fileprivate final class EditorViewModel: ObservableObject {
                 Task {
                     do {
                         if let image = try await photoSelection.loadTransferable(type: DataUrl.self) {
-                            try await attachImage(filename: image.url.lastPathComponent, data: try Data(contentsOf: image.url))
+                            if !(await ensureAltText()) {
+                                return
+                            }
+                            cover = image.url
                         } else {
                             print("No suitable conversion found from PhotosPickerItem to DataUrl")
                         }
@@ -285,6 +282,8 @@ fileprivate final class EditorViewModel: ObservableObject {
             notifyEditing()
         }
     }
+
+    @Published var isEditingAltText = false
 
     func notifyEditing() {
         if !isCopying {
@@ -334,23 +333,28 @@ fileprivate final class EditorViewModel: ObservableObject {
         }
     }
 
-    func attachImage(filename: String, data: Data) async throws {
+    
+    private func ensureAltText() async -> Bool {
         let channel = AsyncChannel<Optional<String>>()
         altTextEditingChannel = channel
+        isEditingAltText = true
         for await altText in channel {
+            channel.finish()
             if let altText {
                 alt = altText
-                break
+                return true
             } else {
-                return
+                break
             }
         }
-        channel.finish()
-
-        let container = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
-            .appending(component: UUID().uuidString, directoryHint: .isDirectory)
-        let resultingFile = container.appending(component: filename, directoryHint: .notDirectory)
-        try FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
+        return false
+    }
+    
+    func attachImage(filename: String, data: Data) async throws {
+        if !(await ensureAltText()) {
+            return
+        }
+        let resultingFile = try await getUniqueDocumentURL(filename: filename)
         try data.write(to: resultingFile)
         cover = resultingFile
     }

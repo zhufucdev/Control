@@ -14,10 +14,13 @@ struct DataUrl: Transferable {
     let url: URL
 
     static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(contentType: .data) { data in
+        FileRepresentation(contentType: .image) { data in
             SentTransferredFile(data.url)
         } importing: { received in
-            Self(url: received.file)
+            let filename = received.file.suggestedFilename ?? received.file.lastPathComponent
+            let resultingFile = try await getUniqueDocumentURL(filename: filename)
+            try FileManager.default.copyItem(at: received.file, to: resultingFile)
+            return Self(url: resultingFile)
         }
     }
 }

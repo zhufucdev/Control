@@ -303,6 +303,7 @@ fileprivate struct TweetView: View {
             altTextChannel = channel
             isEditingAltText = true
             for await alt in channel {
+                channel.finish()
                 if let alt {
                     altText = alt
                     break
@@ -317,20 +318,8 @@ fileprivate struct TweetView: View {
             print("No suitable conversion found from PhotosPickerItem to DataUrl")
             return
         }
-        let container = (FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first ?? FileManager.default.temporaryDirectory)
-            .appending(component: UUID().uuidString, directoryHint: .isDirectory)
-        let filename = image.suggestedFilename ?? image.url.lastPathComponent
-        let resultingFile = container.appending(component: filename, directoryHint: .notDirectory)
 
-        do {
-            try FileManager.default.createDirectory(at: container, withIntermediateDirectories: true)
-            try FileManager.default.copyItem(at: image.url, to: resultingFile)
-        } catch {
-            print("Error loading photo selection: \(error)")
-            return
-        }
-
-        post(.init(id: -1, locale: locale, tweet: tweetBuffer, image: resultingFile.absoluteString, created: .now, alt: altText, trashed: false))
+        post(.init(id: -1, locale: locale, tweet: tweetBuffer, image: image.url.absoluteString, created: .now, alt: altText, trashed: false))
     }
 
     private var metadataToolbarItems: some View {
