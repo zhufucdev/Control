@@ -138,8 +138,10 @@ fileprivate struct Editor: View {
                         attachmentToolbarItems
                     }
                 default:
-                    ToolbarItemGroup {
-                        attachmentToolbarItems
+                    ToolbarItem {
+                        Menu("Attachment", systemImage: "paperclip") {
+                            attachmentToolbarItems
+                        }
                     }
                 }
             #endif
