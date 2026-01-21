@@ -96,71 +96,86 @@ struct GalleryTabView: View {
         }
     }
 
+    private func processedURL(_ url: String, width: Int) -> URL? {
+        if let url = URL(string: url) {
+            if url.isCloudinaryResource, let widthLimited = url.limitingSize(width: (width / 200 + 1) * 200) {
+                return widthLimited
+            }
+            return url
+        } else {
+            return nil
+        }
+    }
+    
     private func buildImageFor(_ item: CachedGalleryItem) -> some View {
-        CachedAsyncImage(
-            url: URL(string: item.image),
-            urlCache: .init(
-                memoryCapacity: 1 << 26, // 64 MiB
-                diskCapacity: 1 << 29 // 0.5 GiB
-            )
-        ) { image in
-            image
-                .resizable()
-                .scaledToFit()
-                .overlay(alignment: .bottomTrailing) {
-                    Group {
-                        if pushState != nil && item.draft {
-                            Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 16)
-                                .symbolEffect(.rotate.byLayer, options: .repeat(.continuous))
-                        } else if item.trashed {
-                            Image(systemName: "trash")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 16)
-                        } else if item.draft {
-                            Image(systemName: "square.and.arrow.up.badge.clock")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 16)
+        GeometryReader { surface in
+            CachedAsyncImage(
+                url: processedURL(item.image, width: Int(surface.size.width)),
+                urlCache: .init(
+                    memoryCapacity: 1 << 26, // 64 MiB
+                    diskCapacity: 1 << 29 // 0.5 GiB
+                )
+            ) { image in
+                image
+                    .resizable()
+                    .scaledToFit()
+                    .overlay(alignment: .bottomTrailing) {
+                        Group {
+                            if pushState != nil && item.draft {
+                                Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 16)
+                                    .symbolEffect(.rotate.byLayer, options: .repeat(.continuous))
+                            } else if item.trashed {
+                                Image(systemName: "trash")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 16)
+                            } else if item.draft {
+                                Image(systemName: "square.and.arrow.up.badge.clock")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 16)
+                            }
+                        }
+                        .padding(6)
+                    }
+            } placeholder: {
+                ProgressView()
+                    .frame(width: 42)
+            }
+            .frame(maxWidth: .infinity, idealHeight: 200, maxHeight: .infinity)
+            .contextMenu {
+                if item.draft {
+                    Button("Push", systemImage: "arrow.up") {
+                        Task {
+                            await pushItem(item)
                         }
                     }
-                    .padding(6)
                 }
-        } placeholder: {
-            ProgressView()
-                .frame(width: 42, height: 300)
+                if item.trashed {
+                    Button("Delete forever", systemImage: "trash") {
+                        Task {
+                            await deleteItem(item)
+                        }
+                    }
+                    Button("Recover") {
+                        Task {
+                            await recoverItem(item)
+                        }
+                    }
+                } else {
+                    Button("Delete", systemImage: "trash") {
+                        Task {
+                            await trashItem(item)
+                        }
+                    }
+                }
+            }
         }
+        .scaledToFill()
         .clipped()
-        .contextMenu {
-            if item.draft {
-                Button("Push", systemImage: "arrow.up") {
-                    Task {
-                        await pushItem(item)
-                    }
-                }
-            }
-            if item.trashed {
-                Button("Delete forever", systemImage: "trash") {
-                    Task {
-                        await deleteItem(item)
-                    }
-                }
-                Button("Recover") {
-                    Task {
-                        await recoverItem(item)
-                    }
-                }
-            } else {
-                Button("Delete", systemImage: "trash") {
-                    Task {
-                        await trashItem(item)
-                    }
-                }
-            }
-        }
     }
 
     private func pushItem(_ item: CachedGalleryItem) async {
