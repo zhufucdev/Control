@@ -72,14 +72,12 @@ struct GalleryTabView: View {
             }
         }
         .sheet(isPresented: $isTweeting) {
-            TweetView(isPresented: $isTweeting) { post in
-                let newItem = CachedGalleryItem(from: post)
-                modelContext.insert(newItem)
-                Task {
-                    await pushItem(newItem)
-                }
+            switch screenWidth {
+            case .regular:
+                tweetView.clipped() //somehow overscrolling content escapes the modal container
+            default:
+                tweetView
             }
-            .clipped()
         }
         .alert("Failed to push to server", isPresented: Binding(get: {
             pushErrorAlertContent != nil
@@ -93,6 +91,16 @@ struct GalleryTabView: View {
             }
         }) { content in
             Text(content.localizedDescription)
+        }
+    }
+    
+    private var tweetView: some View {
+        TweetView(isPresented: $isTweeting) { post in
+            let newItem = CachedGalleryItem(from: post)
+            modelContext.insert(newItem)
+            Task {
+                await pushItem(newItem)
+            }
         }
     }
 
