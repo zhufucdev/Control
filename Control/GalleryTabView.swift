@@ -106,7 +106,7 @@ struct GalleryTabView: View {
             return nil
         }
     }
-    
+
     private func buildImageFor(_ item: CachedGalleryItem) -> some View {
         GeometryReader { surface in
             CachedAsyncImage(
@@ -236,12 +236,13 @@ fileprivate struct TweetView: View {
     @State private var locale: SupportedLocale? = nil
     @State private var photoSelection: PhotosPickerItem? = nil
     @State private var altTextChannel: AsyncChannel<Optional<String>>? = nil
+    @State private var errorAlertContent: String? = nil
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    PhotosPicker("Pick a moment", selection: $photoSelection)
+                    PhotosPicker("Pick a moment", selection: $photoSelection, matching: .images)
                         .photosPickerStyle(.compact)
                         .photosPickerAccessoryVisibility(.hidden)
                         .frame(idealHeight: 120)
@@ -295,6 +296,19 @@ fileprivate struct TweetView: View {
                         }
                     }
                 }
+                .alert("Post failed", isPresented: Binding(get: {
+                    errorAlertContent != nil
+                }, set: { shown in
+                    if !shown {
+                        errorAlertContent = nil
+                    }
+                }), presenting: errorAlertContent) { _ in
+                    Button(role: .confirm) {
+                        errorAlertContent = nil
+                    }
+                } message: { msg in
+                    Text(msg)
+                }
         }
     }
 
@@ -305,17 +319,24 @@ fileprivate struct TweetView: View {
     }
 
     private var postButton: some View {
-        Button("Post", systemImage: "arrow.up") {
-            Task {
-                await postButtonClicked()
+        Menu("Post", systemImage: "arrow.up") {
+            Button("Sharing metadata") {
+                Task {
+                    await postButtonClicked(stripExif: false)
+                }
+            }
+            Button("Removing metadata") {
+                Task {
+                    await postButtonClicked(stripExif: true)
+                }
             }
         }
         .disabled(photoSelection == nil)
     }
 
-    private func postButtonClicked() async {
+    private func postButtonClicked(stripExif: Bool) async {
         guard let photoSelection else { return }
-        
+
         if altText.isEmpty {
             let channel = AsyncChannel<Optional<String>>()
             altTextChannel = channel
@@ -331,12 +352,28 @@ fileprivate struct TweetView: View {
             }
         }
 
-        isPresented = false
         guard let image = try? await photoSelection.loadTransferable(type: DataUrl.self) else {
-            print("No suitable conversion found from PhotosPickerItem to DataUrl")
+            errorAlertContent = String(localized: "No suitable conversion found from PhotosPickerItem to DataUrl")
             return
         }
 
+        if stripExif {
+            guard let imageData = try? Data(contentsOf: image.url) else {
+                errorAlertContent = String(localized: "Image read failed")
+                return
+            }
+            guard let stripped = imageData.removingEXIF() else {
+                errorAlertContent = String(localized: "EXIF removal failed")
+                return
+            }
+            do {
+                try stripped.write(to: image.url)
+            } catch {
+                errorAlertContent = String(localized: "Could not rewrite EXIF-stripped image: \(error.localizedDescription)")
+            }
+        }
+
+        isPresented = false
         post(.init(id: -1, locale: locale, tweet: tweetBuffer, image: image.url.absoluteString, created: .now, alt: altText, trashed: false))
     }
 
