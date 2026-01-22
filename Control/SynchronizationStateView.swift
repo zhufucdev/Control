@@ -62,7 +62,7 @@ struct PushStateView: View {
             switch state {
             case let .uploadingImage(progress):
                 VStack {
-                    ProgressView(value: progress)
+                    ProgressView(value: progress.fractionCompleted)
                     Text("Uploading image...")
                 }
             case .updatingContent:

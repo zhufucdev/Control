@@ -9,15 +9,19 @@ extension CachedUpdatePost {
             Task {
                 do {
                     if let cover, let url = URL(string: cover.image), url.isFileURL {
-                        stream.yield(.uploadingImage(progress: 0))
-                        let response = try await DefaultAPI.imagePost(xAltText: cover.alt, xFileName: url.lastPathComponent, body: url)
+                        stream.yield(.uploadingImage(progress: .init()))
+                        let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: cover.alt, xFileName: url.lastPathComponent, body: url)
+                        rb.onProgressReady = { progress in
+                            stream.yield(.uploadingImage(progress: progress))
+                        }
+                        let response = try await rb.execute()
                         do {
                             try FileManager.default.removeItem(at: url)
                         } catch {
                             print("Warning: failed to delete uploaded cover image")
                             print(error)
                         }
-                        self.cover = .init(image: response.url, alt: cover.alt, id: response.id)
+                        self.cover = UpdatePostCover(image: response.body.url, alt: cover.alt, id: response.body.id)
                     }
 
                     if id < 0 {
@@ -40,7 +44,7 @@ extension CachedUpdatePost {
 }
 
 enum PushSynchronizeState: Equatable {
-    case uploadingImage(progress: Float)
+    case uploadingImage(progress: Progress)
     case updatingContent
     case creatingContent
 }
@@ -98,21 +102,25 @@ extension CachedGalleryItem {
             Task {
                 do {
                     if self.draft {
-                        stream.yield(.uploadingImage(progress: 0))
+                        stream.yield(.uploadingImage(progress: .init()))
                         guard let fileUrl = URL(string: self.image) else { throw URLError(.badURL) }
                         let escapedAltText = self.alt.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self.alt
                         let escapedFileName = fileUrl.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileUrl.lastPathComponent
-                        let uploadedImage = try await DefaultAPI.imagePost(xAltText: escapedAltText, xFileName: escapedFileName, body: fileUrl)
+                        let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: escapedAltText, xFileName: escapedFileName, body: fileUrl)
+                        rb.onProgressReady = { progress in
+                            stream.yield(.uploadingImage(progress: progress))
+                        }
+                        let response = try await rb.execute()
                         do {
                             try FileManager.default.removeItem(at: fileUrl)
                         } catch {
                             print("Warning: failed to delete uploaded gallery image")
                             print(error)
                         }
-                        self.image = uploadedImage.url
+                        self.image = response.body.url
 
                         stream.yield(.creatingContent)
-                        let createRequest = GalleryPutRequest(locale: self.locale, tweet: self.tweet, imageId: uploadedImage.id)
+                        let createRequest = GalleryPutRequest(locale: self.locale, tweet: self.tweet, imageId: response.body.id)
                         let postId = try await DefaultAPI.galleryPut(galleryPutRequest: createRequest)
                         self.id = postId
                     } else {
