@@ -10,6 +10,17 @@ struct BottomStatusModifier<C: View>: ViewModifier {
             .overlay(alignment: .bottom) {
                 body()
                     .frame(height: bodyHeight)
+                    .padding(.vertical, bodyHeight)
+                    .frame(maxWidth: .infinity)
+                    .background {
+                        Rectangle()
+                            .foregroundStyle(.background)
+                            .mask(LinearGradient(
+                                colors: [.clear, .black, .black, .clear],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ))
+                    }
             }
     }
 }
@@ -19,4 +30,3 @@ extension View {
         modifier(BottomStatusModifier(body: body, bodyHeight: height, gradientPadding: padding))
     }
 }
-

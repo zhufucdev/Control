@@ -53,7 +53,6 @@ struct UpdateTabView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom)
                 .frame(maxWidth: 280)
             }
         } detail: {
@@ -63,16 +62,6 @@ struct UpdateTabView: View {
                 UpdatePostView(model: targetItem, id: syncId) {
                     Task {
                         await pushSync(targetItem: targetItem)
-                    }
-                }
-                .bottomStatus(height: 50) {
-                    Group {
-                        if let pushState, columnVisibility == .detailOnly {
-                            PushStateView(state: pushState)
-                                .padding(.horizontal)
-                                .padding(.bottom)
-                                .frame(maxWidth: 280)
-                        }
                     }
                 }
             } else {

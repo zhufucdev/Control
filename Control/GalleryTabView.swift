@@ -58,7 +58,6 @@ struct GalleryTabView: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.bottom)
             .frame(maxWidth: 280)
         }
         .task(id: pullTrialId) {
