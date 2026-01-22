@@ -333,11 +333,13 @@ fileprivate struct TweetView: View {
                     await postButtonClicked(stripExif: false)
                 }
             }
+            .keyboardShortcut(.none)
             Button("Removing metadata") {
                 Task {
                     await postButtonClicked(stripExif: true)
                 }
             }
+            .keyboardShortcut(.defaultAction)
         }
         .disabled(photoSelection == nil)
     }
