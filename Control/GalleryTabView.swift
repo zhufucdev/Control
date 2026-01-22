@@ -74,7 +74,7 @@ struct GalleryTabView: View {
         .sheet(isPresented: $isTweeting) {
             switch screenWidth {
             case .regular:
-                tweetView.clipped() //somehow overscrolling content escapes the modal container
+                tweetView.clipped() // somehow overscrolling content escapes the modal container
             default:
                 tweetView
             }
@@ -93,7 +93,7 @@ struct GalleryTabView: View {
             Text(content.localizedDescription)
         }
     }
-    
+
     private var tweetView: some View {
         TweetView(isPresented: $isTweeting) { post in
             let newItem = CachedGalleryItem(from: post)
@@ -261,6 +261,7 @@ fileprivate struct TweetView: View {
                 }
                 .padding(.horizontal)
             }
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Tweet")
             #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
