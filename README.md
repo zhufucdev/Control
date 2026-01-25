@@ -48,7 +48,7 @@ Ensure this matches the key configured in the Control app settings.
 
 ## Libraries
 
-- **KeychainAccess**: For securely storing credentials.
+- **Valet**: For securely storing credentials.
 - **SDWebImage**: For asynchronous image downloading and caching.
 - **SDWebImageSwiftUI**: SwiftUI integration for SDWebImage.
 - **SDWebImageSVGCoder**: SVG support for SDWebImage.

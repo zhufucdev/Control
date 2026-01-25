@@ -1,71 +1,31 @@
 import Foundation
-import KeychainAccess
+import Valet
 
 fileprivate let PostAuthKey = "post-auth-key"
+fileprivate let SafeStorage = "Control Safe Storage"
 
 struct Credentials {
     public static let `default` = Credentials()
+    let keyring = SecureEnclaveValet.valet(with: Identifier(nonEmpty: SafeStorage)!, accessControl: .userPresence)
 
     public var postAuthKey: String? {
         get async throws {
-            try await withCheckedThrowingContinuation { continuation in
-                DispatchQueue.global().async {
-                    do {
-                        #if os(iOS)
-                            if !(try Keychain().contains(PostAuthKey, withoutAuthenticationUI: true)) {
-                                continuation.resume(returning: nil)
-                                return
-                            }
-                            let key = try Keychain().getString(PostAuthKey)
-                            if let key = key {
-                                continuation.resume(returning: key)
-                            } else {
-                                continuation.resume(throwing: CredentialAccessDenialError(keychainKey: PostAuthKey))
-                            }
-                        #elseif os(macOS)
-                            let key = try Keychain().getString(PostAuthKey)
-                            if let key {
-                                continuation.resume(returning: key)
-                            } else if let hasKey = try? Keychain().contains(PostAuthKey, withoutAuthenticationUI: true), hasKey {
-                                continuation.resume(throwing: CredentialAccessDenialError(keychainKey: PostAuthKey))
-                            } else {
-                                continuation.resume(returning: nil)
-                            }
-                        #endif
-                    } catch {
-                        continuation.resume(throwing: error)
-                    }
-                }
+            do {
+                return try keyring.string(forKey: PostAuthKey, withPrompt: "access the post authorization key")
+            } catch KeychainError.itemNotFound {
+                return nil
+            } catch KeychainError.userCancelled {
+                throw CredentialAccessDenialError(keychainKey: PostAuthKey)
             }
         }
     }
 
+    @MainActor
     public func setPostAuthKey(newValue: String?) async throws {
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global().async {
-                do {
-                    if let value = newValue {
-                        #if os(iOS)
-                            let authenticationPolicy: AuthenticationPolicy =
-                                [.biometryAny, .or, .devicePasscode]
-                        #elseif os(macOS)
-                            let authenticationPolicy: AuthenticationPolicy =
-                                [.biometryAny, .or, .devicePasscode, .watch]
-                        #endif
-                        try Keychain()
-                            .accessibility(
-                                .whenPasscodeSetThisDeviceOnly,
-                                authenticationPolicy: authenticationPolicy
-                            )
-                            .set(value, key: PostAuthKey)
-                    } else {
-                        try Keychain().remove(PostAuthKey)
-                    }
-                    continuation.resume(returning: ())
-                } catch {
-                    continuation.resume(throwing: error)
-                }
-            }
+        if let value = newValue {
+            try keyring.setString(value, forKey: PostAuthKey)
+        } else {
+            try keyring.removeObject(forKey: PostAuthKey)
         }
     }
 }

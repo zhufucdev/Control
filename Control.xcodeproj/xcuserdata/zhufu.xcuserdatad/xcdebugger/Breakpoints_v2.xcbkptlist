@@ -3,4 +3,22 @@
    uuid = "F0DEBB68-A7EF-4DCA-A11B-81E02F9F37CC"
    type = "1"
    version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "022FD1D3-40F9-41C5-949A-FCC957896738"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../../../Library/Developer/Xcode/DerivedData/Control-cuirqokirlgcfndxkigxgnjjcstq/SourcePackages/checkouts/KeychainAccess/Lib/KeychainAccess/Keychain.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "839"
+            endingLineNumber = "839"
+            landmarkName = "contains(_:withoutAuthenticationUI:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
 </Bucket>

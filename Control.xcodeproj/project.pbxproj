@@ -13,6 +13,7 @@
 		6A8D1DAD2F1C9EA500144E1C /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */; };
 		6AB4EADD2F1A805700E17383 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADC2F1A805700E17383 /* SDWebImageSwiftUI */; };
 		6AB4EAE02F1A82A000E17383 /* SDWebImageSVGCoder in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADF2F1A82A000E17383 /* SDWebImageSVGCoder */; };
+		6AE17BCB2F25A97600F62D8F /* Valet in Frameworks */ = {isa = PBXBuildFile; productRef = 6AE17BCA2F25A97600F62D8F /* Valet */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +77,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6AB4EADD2F1A805700E17383 /* SDWebImageSwiftUI in Frameworks */,
+				6AE17BCB2F25A97600F62D8F /* Valet in Frameworks */,
 				6A7368932F19C17B0065A581 /* OpenAPIClient in Frameworks */,
 				6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */,
 				6A7421352F1F0A090098E949 /* CachedAsyncImage in Frameworks */,
@@ -156,6 +158,7 @@
 				6AB4EADF2F1A82A000E17383 /* SDWebImageSVGCoder */,
 				6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */,
 				6A7421342F1F0A090098E949 /* CachedAsyncImage */,
+				6AE17BCA2F25A97600F62D8F /* Valet */,
 			);
 			productName = Control;
 			productReference = 6A7368562F19B3CC0065A581 /* Control.app */;
@@ -246,6 +249,7 @@
 				6AB4EADE2F1A82A000E17383 /* XCRemoteSwiftPackageReference "SDWebImageSVGCoder" */,
 				6A8D1DAB2F1C9EA500144E1C /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 				6A7421332F1F0A090098E949 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
+				6AE17BC92F25A97600F62D8F /* XCRemoteSwiftPackageReference "Valet" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A7368572F19B3CC0065A581 /* Products */;
@@ -750,6 +754,14 @@
 				minimumVersion = 1.8.0;
 			};
 		};
+		6AE17BC92F25A97600F62D8F /* XCRemoteSwiftPackageReference "Valet" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/square/Valet.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -781,6 +793,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6AB4EADE2F1A82A000E17383 /* XCRemoteSwiftPackageReference "SDWebImageSVGCoder" */;
 			productName = SDWebImageSVGCoder;
+		};
+		6AE17BCA2F25A97600F62D8F /* Valet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6AE17BC92F25A97600F62D8F /* XCRemoteSwiftPackageReference "Valet" */;
+			productName = Valet;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
