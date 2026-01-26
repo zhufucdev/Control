@@ -2,7 +2,11 @@ import Foundation
 import Valet
 
 fileprivate let PostAuthKey = "post-auth-key"
+#if DEBUG
+fileprivate let SafeStorage = "Control Safe Storage (Debug)"
+#else
 fileprivate let SafeStorage = "Control Safe Storage"
+#endif
 
 struct Credentials {
     public static let `default` = Credentials()
