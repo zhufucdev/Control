@@ -197,7 +197,7 @@ struct PostsList: View {
                 ToolbarItemGroup {
                     #if os(iOS)
                         NavigationLink {
-                            SettingsView(onModification: onSettingsUpdated)
+                            SettingsView(onUpdate: onSettingsUpdated)
                         } label: {
                             Label("Settings", systemImage: "gear")
                         }
