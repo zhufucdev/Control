@@ -178,7 +178,7 @@ fileprivate struct Editor: View {
             isPresented: $editor.isPickingPhotos,
             selection: $editor.photoSelection,
             matching: .images,
-            preferredItemEncoding: .current,
+            preferredItemEncoding: .automatic,
             photoLibrary: .shared()
         )
         .altTextAlert(isPresented: $editor.isEditingAltText, initialText: editor.alt, updateText: { newValue in
