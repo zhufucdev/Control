@@ -148,15 +148,18 @@ fileprivate struct Editor: View {
 
             if editor.isEditing {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", systemImage: "checkmark") {
-                        #if os(iOS)
-                            // hide keyboard
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                        #endif
-                        editor.commit(to: model)
-                        onSave()
-                        withAnimation {
-                            editor.isEditing = false
+                    if let cover = editor.cover, cover.isFileURL && model.cover?.image != cover.absoluteString {
+                        Menu("Save", systemImage: "checkmark") {
+                            Button("Sharing metadata") {
+                                onSaveButtonClicked(coverMetadata: .keep)
+                            }
+                            Button("Removing metadata") {
+                                onSaveButtonClicked(coverMetadata: .strip)
+                            }
+                        }
+                    } else {
+                        Button("Save", systemImage: "checkmark") {
+                            onSaveButtonClicked(coverMetadata: .keep)
                         }
                     }
                 }
@@ -184,6 +187,29 @@ fileprivate struct Editor: View {
             }
         })
         .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    private func onSaveButtonClicked(coverMetadata: ImageMetadataHandling) {
+        #if os(iOS)
+            // hide keyboard
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
+        if coverMetadata == .strip, let coverUrl = editor.cover, coverUrl.isFileURL {
+            if let buffer = try? Data(contentsOf: coverUrl).removingEXIF() {
+                do {
+                    try buffer.write(to: coverUrl)
+                } catch {
+                    print("Error writing EXIF-stripped image: \(error)")
+                }
+            } else {
+                print("Failed to remove EXIF data")
+            }
+        }
+        editor.commit(to: model)
+        onSave()
+        withAnimation {
+            editor.isEditing = false
+        }
     }
 
     private var attachmentToolbarItems: some View {

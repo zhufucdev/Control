@@ -30,3 +30,8 @@ extension Data {
         return mutableData as Data
     }
 }
+
+enum ImageMetadataHandling {
+    case strip
+    case keep
+}
