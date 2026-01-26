@@ -1,6 +1,7 @@
 import OpenAPIClient
 import SwiftData
 import SwiftUI
+import Combine
 
 struct PullStateView: View {
     let state: PullState
@@ -62,7 +63,7 @@ struct PushStateView: View {
             switch state {
             case let .uploadingImage(progress):
                 VStack {
-                    ProgressView(value: progress.fractionCompleted)
+                    ProgressViewForNSProgress(value: progress)
                     Text("Uploading image...")
                 }
             case .updatingContent:
@@ -82,3 +83,24 @@ struct PushStateView: View {
     }
 }
 
+fileprivate struct ProgressViewForNSProgress: View {
+    let value: Progress
+    @State private var fractionCompleted: Double = 0
+    @State private var subscription: NSKeyValueObservation? = nil
+    var body: some View {
+        ProgressView(value: fractionCompleted)
+            .onAppear {
+                fractionCompleted = value.fractionCompleted
+                subscription = value.observe(\.fractionCompleted) { _, change in
+                    if let newValue = change.newValue {
+                        DispatchQueue.main.async {
+                            fractionCompleted = newValue
+                        }
+                    }
+                }
+            }
+            .onDisappear {
+                subscription?.invalidate()
+            }
+    }
+}
