@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct LandingView: View {
-    let onSubmit: (SettingsUpdate) -> Void
+    let onSubmit: (PrimeUpdate) -> Void
 
     @State private var postAuthKeyBuffer = ""
-    @State private var endpointBaseUrlBuffer = DefaultApiEndpoint
+    @State private var endpointBaseUrlBuffer = DefaultAPIEndpoint
     @State private var mainSiteUrlBuffer = DefaultMainSiteUrl
 
     var body: some View {
@@ -16,17 +16,17 @@ struct LandingView: View {
                     postAuthKey: $postAuthKeyBuffer
                 )
                 Button("Continue") {
-                    onSubmit(SettingsUpdate(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
+                    onSubmit(PrimeUpdate(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.accentColor)
                 Button("Reset") {
                     postAuthKeyBuffer = ""
-                    endpointBaseUrlBuffer = DefaultApiEndpoint
+                    endpointBaseUrlBuffer = DefaultAPIEndpoint
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(.red)
-                .disabled(postAuthKeyBuffer == "" && endpointBaseUrlBuffer == DefaultApiEndpoint)
+                .disabled(postAuthKeyBuffer == "" && endpointBaseUrlBuffer == DefaultAPIEndpoint)
             }
             .formStyle(.grouped)
             .navigationTitle("Configurations")
@@ -40,7 +40,7 @@ struct LandingView: View {
     }
 }
 
-struct SettingsUpdate {
+struct PrimeUpdate {
     let endpoint: String
     let postAuthKey: String
     let mainSiteUrl: String

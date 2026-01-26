@@ -24,11 +24,24 @@ struct ControlApp: App {
         }
     }()
 
-    @AppStorage(UserDefaultsKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultApiEndpoint
+    @AppStorage(UserDefaultKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultAPIEndpoint
     @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
+    @AppStorage(UserDefaultClientSideImageService) private var imageServiceName = ClientSideImageService.backend.rawValue
     @State var appState: ControlAppState = .locked
 
     func onInitialzie() {
+        switch ClientSideImageService(rawValue: imageServiceName)! {
+        case .cloudinary:
+            if let config = try? ClientSideImageUploadConfiguration(userDefaults: .standard) {
+                ClientSideImageUploadConfiguration.shared = config
+                SynchronizeConfiguration.shared.useClientSideImageUpload = ClientSideImageUploadConfiguration.shared
+            } else {
+                print("Illegal user defaults for client side image upload found")
+            }
+        case .backend:
+            SynchronizeConfiguration.shared.useClientSideImageUpload = nil
+        }
+        
         Task {
             do {
                 let key = try await Credentials.default.postAuthKey
@@ -47,7 +60,7 @@ struct ControlApp: App {
         }
     }
 
-    func onLandingSubmitted(submission: SettingsUpdate) {
+    func onLandingSubmitted(submission: PrimeUpdate) {
         if submission.postAuthKey.isEmpty {
             appState = .uninitialized
         }
@@ -59,15 +72,18 @@ struct ControlApp: App {
         }
     }
 
-    func onSettingsUpdated(update: SettingsUpdate?) {
-        Task {
-            await withDebounce(key: "onSettingsUpdate", for: .seconds(3)) {
-                if let update {
-                    onLandingSubmitted(submission: update)
-                } else if case let .ready(_, postAuthKey, _) = appState {
-                    onLandingSubmitted(submission: .init(endpoint: endpointBaseUrl, postAuthKey: postAuthKey, mainSiteUrl: mainSiteUrl))
+    func onSettingsUpdated(_ update: SettingsUpdate) {
+        switch update {
+        case let .prime(prime):
+            Task {
+                await withDebounce(key: "onPrimarySettingsUpdate", for: .seconds(1)) {
+                    onLandingSubmitted(submission: prime)
                 }
             }
+        case let .imageService(service):
+            SynchronizeConfiguration.shared.useClientSideImageUpload = if service == .backend { nil } else { .shared }
+        case let .imageUploadConfig(configuration):
+            ClientSideImageUploadConfiguration.shared = configuration
         }
     }
 
@@ -86,9 +102,7 @@ struct ControlApp: App {
             case let .ready(endpoint, postAuthKey, mainSite):
                 TabView {
                     Tab("Updates", systemImage: "text.rectangle.page.fill") {
-                        UpdateTabView(onSettingsUpdated: { update in
-                            onSettingsUpdated(update: update)
-                        })
+                        UpdateTabView(onSettingsUpdated: onSettingsUpdated)
                     }
                     Tab("Gallery", systemImage: "photo.on.rectangle.angled") {
                         GalleryTabView()
@@ -103,11 +117,10 @@ struct ControlApp: App {
 
         #if os(macOS)
             Settings {
-                SettingsView { update in
-                    onSettingsUpdated(update: update)
-                }
-                .frame(maxWidth: 600)
-                .padding()
+                SettingsView(onUpdate: onSettingsUpdated)
+                    .formStyle(.grouped)
+                    .frame(maxWidth: 600)
+                    .padding()
             }
         #endif
     }

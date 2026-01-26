@@ -11,7 +11,7 @@ struct UpdateTabView: View {
     @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var syncId = 0
 
-    let onSettingsUpdated: (SettingsUpdate?) -> Void
+    let onSettingsUpdated: (SettingsUpdate) -> Void
 
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \CachedUpdatePost.created, order: .reverse)
@@ -132,7 +132,7 @@ struct UpdateTabView: View {
 
 struct PostsList: View {
     @Binding var selection: Set<PersistentIdentifier>
-    let onSettingsUpdated: (SettingsUpdate?) -> Void
+    let onSettingsUpdated: (SettingsUpdate) -> Void
     let onTrashItem: (CachedUpdatePost) -> Void
     let onDeleteItem: (CachedUpdatePost) -> Void
 

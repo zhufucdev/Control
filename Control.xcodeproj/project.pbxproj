@@ -10,6 +10,7 @@
 		6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 6A73688D2F19BDB20065A581 /* KeychainAccess */; };
 		6A7368932F19C17B0065A581 /* OpenAPIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 6A7368922F19C17B0065A581 /* OpenAPIClient */; };
 		6A7421352F1F0A090098E949 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 6A7421342F1F0A090098E949 /* CachedAsyncImage */; };
+		6A882B3D2F27AD2D000CAAC3 /* MimeTypeEnum in Frameworks */ = {isa = PBXBuildFile; productRef = 6A882B3C2F27AD2D000CAAC3 /* MimeTypeEnum */; };
 		6A8D1DAD2F1C9EA500144E1C /* AsyncAlgorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */; };
 		6AB4EADD2F1A805700E17383 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADC2F1A805700E17383 /* SDWebImageSwiftUI */; };
 		6AB4EAE02F1A82A000E17383 /* SDWebImageSVGCoder in Frameworks */ = {isa = PBXBuildFile; productRef = 6AB4EADF2F1A82A000E17383 /* SDWebImageSVGCoder */; };
@@ -79,6 +80,7 @@
 				6AB4EADD2F1A805700E17383 /* SDWebImageSwiftUI in Frameworks */,
 				6AE17BCB2F25A97600F62D8F /* Valet in Frameworks */,
 				6A7368932F19C17B0065A581 /* OpenAPIClient in Frameworks */,
+				6A882B3D2F27AD2D000CAAC3 /* MimeTypeEnum in Frameworks */,
 				6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */,
 				6A7421352F1F0A090098E949 /* CachedAsyncImage in Frameworks */,
 				6AB4EAE02F1A82A000E17383 /* SDWebImageSVGCoder in Frameworks */,
@@ -159,6 +161,7 @@
 				6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */,
 				6A7421342F1F0A090098E949 /* CachedAsyncImage */,
 				6AE17BCA2F25A97600F62D8F /* Valet */,
+				6A882B3C2F27AD2D000CAAC3 /* MimeTypeEnum */,
 			);
 			productName = Control;
 			productReference = 6A7368562F19B3CC0065A581 /* Control.app */;
@@ -250,6 +253,7 @@
 				6A8D1DAB2F1C9EA500144E1C /* XCRemoteSwiftPackageReference "swift-async-algorithms" */,
 				6A7421332F1F0A090098E949 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
 				6AE17BC92F25A97600F62D8F /* XCRemoteSwiftPackageReference "Valet" */,
+				6A882B3B2F27AD2D000CAAC3 /* XCRemoteSwiftPackageReference "MimeTypeEnum" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A7368572F19B3CC0065A581 /* Products */;
@@ -730,6 +734,14 @@
 				minimumVersion = 2.1.1;
 			};
 		};
+		6A882B3B2F27AD2D000CAAC3 /* XCRemoteSwiftPackageReference "MimeTypeEnum" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/emotiveapps/MimeTypeEnum";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.2;
+			};
+		};
 		6A8D1DAB2F1C9EA500144E1C /* XCRemoteSwiftPackageReference "swift-async-algorithms" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-async-algorithms.git";
@@ -778,6 +790,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6A7421332F1F0A090098E949 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
 			productName = CachedAsyncImage;
+		};
+		6A882B3C2F27AD2D000CAAC3 /* MimeTypeEnum */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A882B3B2F27AD2D000CAAC3 /* XCRemoteSwiftPackageReference "MimeTypeEnum" */;
+			productName = MimeTypeEnum;
 		};
 		6A8D1DAC2F1C9EA500144E1C /* AsyncAlgorithms */ = {
 			isa = XCSwiftPackageProductDependency;

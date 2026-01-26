@@ -1,5 +1,5 @@
 {
-  "originHash" : "52a18a73d9933e41c52bc3461581672c93678c90c08a3d7be87d1129042f5e46",
+  "originHash" : "ef9ffc0e5412a2cd1d499a46d0571a9ff5f9858dce5d1bc2012e574adcf970c7",
   "pins" : [
     {
       "identity" : "keychainaccess",
@@ -8,6 +8,15 @@
       "state" : {
         "revision" : "84e546727d66f1adc5439debad16270d0fdd04e7",
         "version" : "4.2.2"
+      }
+    },
+    {
+      "identity" : "mimetypeenum",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/emotiveapps/MimeTypeEnum",
+      "state" : {
+        "revision" : "bae188bc546bbf98c180f8da7ef0b39b5c9056ae",
+        "version" : "1.0.2"
       }
     },
     {
