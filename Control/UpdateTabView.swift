@@ -107,6 +107,7 @@ struct UpdateTabView: View {
             for try await state in targetItem.pushToBackend() {
                 pushState = state
             }
+            syncId += 1
         } catch let ErrorResponse.error(_, body, _, innerError) {
             pushErrorAlertContent = innerError.localizedDescription
             print("Banckend push sync failed: \(innerError)")
@@ -117,7 +118,6 @@ struct UpdateTabView: View {
             pushErrorAlertContent = error.localizedDescription
         }
         pushState = nil
-        syncId += 1
     }
 
     private func pushDelete(id: Int) async {
