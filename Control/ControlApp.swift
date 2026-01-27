@@ -84,6 +84,7 @@ struct ControlApp: App {
             SynchronizeConfiguration.shared.useClientSideImageUpload = if service == .backend { nil } else { .shared }
         case let .imageUploadConfig(configuration):
             ClientSideImageUploadConfiguration.shared = configuration
+            SynchronizeConfiguration.shared.useClientSideImageUpload = .shared
         }
     }
 
