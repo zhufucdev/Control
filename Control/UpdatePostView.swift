@@ -112,6 +112,9 @@ fileprivate struct Editor: View {
                     .frame(minHeight: 100, alignment: .top)
                     .padding(.horizontal)
                 UpdatePostPreview(editor: editor)
+                #if os(macOS)
+                    Spacer().frame(height: 8)
+                #endif
             }
         }
         .scrollDismissesKeyboard(.immediately)
@@ -440,17 +443,18 @@ fileprivate struct ShapeSelect: View {
 
 fileprivate struct UpdatePostPreview: View {
     @Environment(\.mainSiteUrl) var mainSiteUrl
-    @EnvironmentObject var templateCahce: TemplateCache
+    @EnvironmentObject var templateCache: TemplateCache
 
     @StateObject var editor: EditorViewModel
     @State private var state: Result<WebPage, any Error>? = nil
+    @AppStorage("updatePostCardHeight") private var containerHeight: Double = 400
 
     var body: some View {
         Group {
             switch state {
             case let .success(page):
                 WebView(page)
-                    .frame(maxWidth: .infinity, minHeight: 400) // FIXME: adaptative height
+                    .frame(maxWidth: .infinity, minHeight: containerHeight)
                     .disabled(true)
             case let .failure(failure):
                 VStack(alignment: .leading, spacing: 8) {
@@ -467,6 +471,7 @@ fileprivate struct UpdatePostPreview: View {
                     Text("Loading preview...")
                 }
                 .padding(36)
+                .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(style: .init(lineWidth: 1)).foregroundStyle(.separator))
             }
@@ -474,12 +479,13 @@ fileprivate struct UpdatePostPreview: View {
         .frame(maxWidth: .infinity, minHeight: 200)
         .padding(.horizontal)
         .task(id: editor.edition) {
+            state = nil
             do {
-                let data = if let t = templateCahce.source { t } else { try await DefaultAPI.updateTemplateGet() }
-                templateCahce.source = data
+                let data = if let t = templateCache.source { t } else { try await DefaultAPI.updateTemplateGet() }
+                templateCache.source = data
 
                 let processedData = try preprocessHtml(content: data)
-                let page = if let p = templateCahce.webPage { p } else {
+                let page = if let p = templateCache.webPage { p } else {
                     {
                         var webpageConfig = WebPage.Configuration()
                         webpageConfig.websiteDataStore = .init(forIdentifier: UUID(uuidString: "8C885417-C368-463C-9154-43DB2B83CAB0")!)
@@ -489,7 +495,7 @@ fileprivate struct UpdatePostPreview: View {
                         return WebPage(configuration: webpageConfig)
                     }()
                 }
-                templateCahce.webPage = page
+                templateCache.webPage = page
 
                 if !page.backForwardList.backList.isEmpty {
                     page.load(page.backForwardList.backList.last!) // save memory
@@ -498,10 +504,51 @@ fileprivate struct UpdatePostPreview: View {
                 #if DEBUG
                     page.isInspectable = true
                 #endif
+                
                 state = .success(page)
+                
+                for try await event in page.navigations {
+                    switch event {
+                    case .finished:
+                        await updateWebContainerHeight()
+                    default: break // does not break the loop
+                    }
+                }
+            } catch let ErrorResponse.error(status, _, _, error) {
+                if error is CancellationError {
+                    return
+                }
+                state = .failure(error)
+                print("Failed to load preview, http \(status): \(error)")
             } catch {
                 state = .failure(error)
+                print("Failed to load preview: \(error)")
             }
+        }
+        .onGeometryChange(for: CGRect.self) { proxy in
+            proxy.frame(in: .global)
+        } action: { _ in
+            Task {
+                await updateWebContainerHeight()
+            }
+        }
+    }
+    
+    private func updateWebContainerHeight() async {
+        guard case let .success(page) = state else {
+            print("Ignoring DOM side page update because state is not ready")
+            return
+        }
+        do {
+            if let newValue = try await page.callJavaScript("""
+            const container = document.querySelector(".covered-post-card");
+            const bounding = container.getBoundingClientRect();
+            return bounding.height;
+            """) as? Double {
+                containerHeight = newValue
+            }
+        } catch {
+            print("DOM side height measurement failed: \(error)")
         }
     }
 
