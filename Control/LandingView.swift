@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct LandingView: View {
-    let onSubmit: (PrimeUpdate) -> Void
+    let onSubmit: (PrimeUpdate) async throws -> Void
 
     @State private var postAuthKeyBuffer = ""
     @State private var endpointBaseUrlBuffer = DefaultAPIEndpoint
     @State private var mainSiteUrlBuffer = DefaultMainSiteUrl
+    @State private var isInvalidConfigDialogShown = false
+    @State private var configError: (any Error)? = nil
 
     var body: some View {
         NavigationStack {
@@ -16,7 +18,14 @@ struct LandingView: View {
                     postAuthKey: $postAuthKeyBuffer
                 )
                 Button("Continue") {
-                    onSubmit(PrimeUpdate(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
+                    Task {
+                        do {
+                            try await onSubmit(PrimeUpdate(endpoint: endpointBaseUrlBuffer, postAuthKey: postAuthKeyBuffer, mainSiteUrl: mainSiteUrlBuffer))
+                        } catch {
+                            configError = error
+                            isInvalidConfigDialogShown = true
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.accentColor)
@@ -30,6 +39,13 @@ struct LandingView: View {
             }
             .formStyle(.grouped)
             .navigationTitle("Configurations")
+        }
+        .alert("Invalid configuration", isPresented: $isInvalidConfigDialogShown, presenting: configError) { _ in
+            Button(role: .cancel) {
+                isInvalidConfigDialogShown = false
+            }
+        } message: { error in
+            Text("\(error.localizedDescription) Please adjust the fields and try again")
         }
     }
 }

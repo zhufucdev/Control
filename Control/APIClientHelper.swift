@@ -2,12 +2,16 @@ import Foundation
 import OpenAPIClient
 
 extension OpenAPIClientAPIConfiguration {
-    func alternate(basePath: String, postAuthKey: String) {
+    func alternate(basePath: String, postAuthKey: String) throws {
         self.basePath = basePath
         customHeaders = [
             "X-Post-Auth-Key": postAuthKey,
         ]
-        interceptor = ControlOpenAPIInterceptor(baseURL: URL(string: basePath)!)
+        if let baseURL = URL(string: basePath) {
+            interceptor = ControlOpenAPIInterceptor(baseURL: baseURL)
+        } else {
+            throw URLError(.badURL)
+        }
     }
 }
 

@@ -13,56 +13,77 @@ struct SettingsView: View {
     @AppStorage(UserDefaultCloudinaryAPIBaseUrl) private var cloudinaryAPIBaseUrl = DefaultCloudinaryAPIEndpoint
     @AppStorage(UserDefaultCloudName) private var cloudinaryCloudName = ""
     @AppStorage(UserDefaultPresetName) private var cloudinaryPresetName = ""
-    
-    let onUpdate: (SettingsUpdate) -> Void
+
+    @State private var isErrorDialogShown = false
+    @State private var dialogError: (any Error)? = nil
+
+    let onUpdate: (SettingsUpdate) async throws -> Void
 
     var body: some View {
         Form {
             BackendSection(endpointBaseUrl: $endpointBaseUrl, mainSiteUrl: $mainSiteUrl, postAuthKey: $postAuthKeyBuffer.content)
                 .onChange(of: endpointBaseUrl) { _, _ in
-                    onUpdate(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
+                    onUpdateErrorHandled(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
                 }
                 .onChange(of: mainSiteUrl) { _, _ in
-                    onUpdate(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
+                    onUpdateErrorHandled(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
                 }
             ClientSideImageUploadSection(service: Binding(get: {
                 ClientSideImageService(rawValue: imageServiceName)!
             }, set: { newValue in
                 imageServiceName = newValue.rawValue
             }), endpointBaseUrl: $cloudinaryAPIBaseUrl, cloudName: $cloudinaryCloudName, presetName: $cloudinaryPresetName)
-            .onChange(of: imageServiceName) { oldValue, newValue in
-                onUpdate(.imageService(ClientSideImageService(rawValue: newValue)!))
-            }
-            .onChange(of: cloudinaryAPIBaseUrl) { oldValue, newValue in
-                if let newConfig = imageUploadConfiguration() {
-                    onUpdate(.imageUploadConfig(newConfig))
+                .onChange(of: imageServiceName) { _, newValue in
+                    onUpdateErrorHandled(.imageService(ClientSideImageService(rawValue: newValue)!))
                 }
-            }
-            .onChange(of: cloudinaryCloudName) { oldValue, newValue in
-                if let newConfig = imageUploadConfiguration() {
-                    onUpdate(.imageUploadConfig(newConfig))
+                .onChange(of: cloudinaryAPIBaseUrl) { _, _ in
+                    if let newConfig = imageUploadConfiguration() {
+                        onUpdateErrorHandled(.imageUploadConfig(newConfig))
+                    }
                 }
-            }
-            .onChange(of: cloudinaryPresetName) { oldValue, newValue in
-                if let newConfig = imageUploadConfiguration() {
-                    onUpdate(.imageUploadConfig(newConfig))
+                .onChange(of: cloudinaryCloudName) { _, _ in
+                    if let newConfig = imageUploadConfiguration() {
+                        onUpdateErrorHandled(.imageUploadConfig(newConfig))
+                    }
                 }
-            }
+                .onChange(of: cloudinaryPresetName) { _, _ in
+                    if let newConfig = imageUploadConfiguration() {
+                        onUpdateErrorHandled(.imageUploadConfig(newConfig))
+                    }
+                }
         }
         .navigationTitle("Settings")
         .onChange(of: postAuthKeyBuffer.debounced) { _, newValue in
             Task {
                 let key = newValue.isEmpty ? nil : newValue
                 try? await Credentials.default.setPostAuthKey(newValue: key)
-                onUpdate(.prime(primeUpdate(key: newValue)))
+                onUpdateErrorHandled(.prime(primeUpdate(key: newValue)))
+            }
+        }
+        .alert("Invalid configuration", isPresented: $isErrorDialogShown, presenting: dialogError) { _ in
+            Button(role: .cancel) {
+                isErrorDialogShown = false
+            }
+        } message: { error in
+            Text("\(error.localizedDescription) Please adjust the fields and try again")
+        }
+    }
+
+    private func onUpdateErrorHandled(_ update: SettingsUpdate) {
+        Task {
+            do {
+                try await onUpdate(update)
+            } catch {
+                dialogError = error
+                isErrorDialogShown = true
             }
         }
     }
-    
+
     private func primeUpdate(key: String) -> PrimeUpdate {
         .init(endpoint: endpointBaseUrl, postAuthKey: key, mainSiteUrl: mainSiteUrl)
     }
-    
+
     private func imageUploadConfiguration() -> ClientSideImageUploadConfiguration? {
         if let url = URL(string: cloudinaryAPIBaseUrl) {
             .init(baseURL: url, cloudName: cloudinaryCloudName, presetName: cloudinaryPresetName)

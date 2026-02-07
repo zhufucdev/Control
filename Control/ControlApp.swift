@@ -27,6 +27,7 @@ struct ControlApp: App {
     @AppStorage(UserDefaultKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultAPIEndpoint
     @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
     @AppStorage(UserDefaultClientSideImageService) private var imageServiceName = ClientSideImageService.backend.rawValue
+    @AppStorage(UserDefaultInitialized) private var initialized = false
     @State var appState: ControlAppState = .locked
 
     func onInitialzie() {
@@ -41,13 +42,13 @@ struct ControlApp: App {
         case .backend:
             SynchronizeConfiguration.shared.useClientSideImageUpload = nil
         }
-        
+
         Task {
             do {
-                let key = try await Credentials.default.postAuthKey
+                let key = try await Credentials.default.postAuthKey ?? ""
                 let endpoint = endpointBaseUrl
-                if let key {
-                    OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpoint, postAuthKey: key)
+                if initialized {
+                    try? OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpoint, postAuthKey: key)
                     withAnimation {
                         appState = .ready(endpointBaseUrl: endpoint, postAuthKey: key, mainSiteUrl: mainSiteUrl)
                     }
@@ -60,25 +61,18 @@ struct ControlApp: App {
         }
     }
 
-    func onLandingSubmitted(submission: PrimeUpdate) {
-        if submission.postAuthKey.isEmpty {
-            appState = .uninitialized
-        }
-
-        Task(priority: .high) {
-            try? await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
-            OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
-            appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
-        }
+    func onLandingSubmitted(submission: PrimeUpdate) async throws {
+        try await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
+        try OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
+        appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
+        initialized = true
     }
 
-    func onSettingsUpdated(_ update: SettingsUpdate) {
+    func onSettingsUpdated(_ update: SettingsUpdate) async throws {
         switch update {
         case let .prime(prime):
-            Task {
-                await withDebounce(key: "onPrimarySettingsUpdate", for: .seconds(1)) {
-                    onLandingSubmitted(submission: prime)
-                }
+            _ = try await withDebounce(key: "onPrimarySettingsUpdate", for: .seconds(1)) {
+                try await onLandingSubmitted(submission: prime)
             }
         case let .imageService(service):
             SynchronizeConfiguration.shared.useClientSideImageUpload = if service == .backend { nil } else { .shared }
