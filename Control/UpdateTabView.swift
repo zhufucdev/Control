@@ -126,6 +126,7 @@ struct UpdateTabView: View {
         } catch {
             pushErrorAlertContent = error.localizedDescription
             print("Backend delete failed: \(error)")
+            pullTrialId += 1
         }
     }
 }
