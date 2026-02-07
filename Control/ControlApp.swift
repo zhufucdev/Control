@@ -70,9 +70,27 @@ struct ControlApp: App {
 
     func onSettingsUpdated(_ update: SettingsUpdate) async throws {
         switch update {
-        case let .prime(prime):
-            _ = try await withDebounce(key: "onPrimarySettingsUpdate", for: .seconds(1)) {
-                try await onLandingSubmitted(submission: prime)
+        case let .key(key):
+            _ = try await withDebounce(key: "onKeyUpdate", for: .seconds(1)) {
+                try await Credentials.default.setPostAuthKey(newValue: key.isEmpty ? nil : key)
+                try OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpointBaseUrl, postAuthKey: key)
+                appState = .ready(endpointBaseUrl: endpointBaseUrl, postAuthKey: key, mainSiteUrl: mainSiteUrl)
+            }
+        case let .backend(backend):
+            _ = try await withDebounce(key: "onBackendUpdate", for: .seconds(1)) {
+                do {
+                    let key = if case let .ready(_, postAuthKey, _) = appState {
+                        postAuthKey
+                    } else {
+                        try await Credentials.default.postAuthKey ?? ""
+                    }
+                    try OpenAPIClientAPIConfiguration.shared.alternate(
+                        basePath: backend.endpoint,
+                        postAuthKey: key
+                    )
+                } catch is CredentialAccessDenialError {
+                    appState = .locked
+                }
             }
         case let .imageService(service):
             SynchronizeConfiguration.shared.useClientSideImageUpload = if service == .backend { nil } else { .shared }

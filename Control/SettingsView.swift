@@ -22,11 +22,11 @@ struct SettingsView: View {
     var body: some View {
         Form {
             BackendSection(endpointBaseUrl: $endpointBaseUrl, mainSiteUrl: $mainSiteUrl, postAuthKey: $postAuthKeyBuffer.content)
-                .onChange(of: endpointBaseUrl) { _, _ in
-                    onUpdateErrorHandled(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
+                .onChange(of: endpointBaseUrl) { _, newValue in
+                    onUpdateErrorHandled(.backend(.init(endpoint: newValue, mainSiteUrl: mainSiteUrl)))
                 }
-                .onChange(of: mainSiteUrl) { _, _ in
-                    onUpdateErrorHandled(.prime(primeUpdate(key: postAuthKeyBuffer.content)))
+                .onChange(of: mainSiteUrl) { _, newValue in
+                    onUpdateErrorHandled(.backend(.init(endpoint: endpointBaseUrl, mainSiteUrl: newValue)))
                 }
             ClientSideImageUploadSection(service: Binding(get: {
                 ClientSideImageService(rawValue: imageServiceName)!
@@ -57,7 +57,7 @@ struct SettingsView: View {
             Task {
                 let key = newValue.isEmpty ? nil : newValue
                 try? await Credentials.default.setPostAuthKey(newValue: key)
-                onUpdateErrorHandled(.prime(primeUpdate(key: newValue)))
+                onUpdateErrorHandled(.key(newValue))
             }
         }
         .alert("Invalid configuration", isPresented: $isErrorDialogShown, presenting: dialogError) { _ in
@@ -157,9 +157,15 @@ struct SettingsView: View {
 }
 
 enum SettingsUpdate {
-    case prime(PrimeUpdate)
+    case key(String)
+    case backend(BackendUpdate)
     case imageService(ClientSideImageService)
     case imageUploadConfig(ClientSideImageUploadConfiguration)
+}
+
+struct BackendUpdate {
+    let endpoint: String
+    let mainSiteUrl: String
 }
 
 fileprivate final class DebouncedStringObservable: ObservableObject {
