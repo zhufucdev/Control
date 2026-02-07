@@ -235,6 +235,7 @@ struct PostsList: View {
         withAnimation {
             let newItem = CachedUpdatePost()
             modelContext.insert(newItem)
+            try? modelContext.save()
         }
     }
 
