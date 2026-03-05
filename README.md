@@ -1,6 +1,6 @@
 # Control
 
-Control is a multiplatform (iOS, macOS) SwiftUI client implementation of OpenAPI specification of [Steve's blog](https://github.com/zhufucdev/site).
+Control is a multiplatform (iOS, macOS) SwiftUI client implementation of OpenAPI specification of [my blog](https://github.com/zhufucdev/site).
 It serves as a management interface for posting updates, managing images, and curating gallery items.
 
 ## Project Structure
