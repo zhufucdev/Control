@@ -3,7 +3,6 @@ import CachedAsyncImage
 import Foundation
 import OpenAPIClient
 import PhotosUI
-import QuickLook
 import SwiftData
 import SwiftUI
 
@@ -103,7 +102,7 @@ struct GalleryTabView: View {
             }
         }
     }
-    
+
     private func buildImageFor(_ item: CachedGalleryItem) -> some View {
         CachedGalleryItemView(item, pushState: pushState)
             .contextMenu {
@@ -185,14 +184,14 @@ struct GalleryTabView: View {
 
 fileprivate struct CachedGalleryItemView: View {
     @State private var previewURL: URL? = nil
-    
+
     let item: CachedGalleryItem
     let pushState: PushSynchronizeState?
     init(_ item: CachedGalleryItem, pushState: PushSynchronizeState? = nil) {
         self.item = item
         self.pushState = pushState
     }
-    
+
     private func processedURL(_ url: String, width: Int) -> URL? {
         if let url = URL(string: url) {
             if url.isCloudinaryResource, let widthLimited = url.limitingSize(width: (width / 200 + 1) * 200) {
@@ -254,9 +253,7 @@ fileprivate struct CachedGalleryItemView: View {
             .clipped()
         }
         .buttonStyle(.plain)
-        #if os(macOS) || os(iOS)
-        .quickLookPreview($previewURL)
-        #endif
+        .previewingImage($previewURL, altText: item.alt)
     }
 }
 
