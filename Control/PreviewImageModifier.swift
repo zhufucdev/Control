@@ -13,7 +13,7 @@ struct PreviewImageModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
         #if os(macOS)
-        .quickLookPreview($previewURL)
+        .quickLookPreview($url)
         #elseif os(iOS)
         .fullScreenCover(isPresented: Binding(get: {
             url != nil
