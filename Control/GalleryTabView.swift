@@ -254,7 +254,9 @@ fileprivate struct CachedGalleryItemView: View {
             .clipped()
         }
         .buttonStyle(.plain)
+        #if os(macOS) || os(iOS)
         .quickLookPreview($previewURL)
+        #endif
     }
 }
 
