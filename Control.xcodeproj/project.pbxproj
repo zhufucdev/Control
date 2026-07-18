@@ -731,7 +731,7 @@
 			repositoryURL = "https://github.com/lorenzofiamingo/swiftui-cached-async-image";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 2.1.1;
+				minimumVersion = 2.1.2;
 			};
 		};
 		6A882B3B2F27AD2D000CAAC3 /* XCRemoteSwiftPackageReference "MimeTypeEnum" */ = {

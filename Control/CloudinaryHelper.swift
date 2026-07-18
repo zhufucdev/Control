@@ -20,8 +20,9 @@ extension URL {
         if let height {
             limitPathSeg += ",h_\(height)"
         }
-        paths.insert(limitPathSeg, at: 4)
-        components.path = paths.joined(separator: "/")
+        paths.removeFirst() // first: "/", will be added back
+        paths.insert(limitPathSeg, at: 3)
+        components.path = "/" + paths.joined(separator: "/")
         return components.url
     }
 }
