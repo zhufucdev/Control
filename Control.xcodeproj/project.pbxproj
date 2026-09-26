@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6A0F10E93067F80C0067E516 /* CachedAsyncImage in Frameworks */ = {isa = PBXBuildFile; productRef = 6A0F10E83067F80C0067E516 /* CachedAsyncImage */; };
+		6A0F10EC3067F9000067E516 /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 6A0F10EB3067F9000067E516 /* OpenAI */; };
 		6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */ = {isa = PBXBuildFile; productRef = 6A73688D2F19BDB20065A581 /* KeychainAccess */; };
 		6A7368932F19C17B0065A581 /* OpenAPIClient in Frameworks */ = {isa = PBXBuildFile; productRef = 6A7368922F19C17B0065A581 /* OpenAPIClient */; };
 		6A882B3D2F27AD2D000CAAC3 /* MimeTypeEnum in Frameworks */ = {isa = PBXBuildFile; productRef = 6A882B3C2F27AD2D000CAAC3 /* MimeTypeEnum */; };
@@ -84,6 +85,7 @@
 				6A882B3D2F27AD2D000CAAC3 /* MimeTypeEnum in Frameworks */,
 				6A73688E2F19BDB20065A581 /* KeychainAccess in Frameworks */,
 				6AB4EAE02F1A82A000E17383 /* SDWebImageSVGCoder in Frameworks */,
+				6A0F10EC3067F9000067E516 /* OpenAI in Frameworks */,
 				6A8D1DAD2F1C9EA500144E1C /* AsyncAlgorithms in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -162,6 +164,7 @@
 				6AE17BCA2F25A97600F62D8F /* Valet */,
 				6A882B3C2F27AD2D000CAAC3 /* MimeTypeEnum */,
 				6A0F10E83067F80C0067E516 /* CachedAsyncImage */,
+				6A0F10EB3067F9000067E516 /* OpenAI */,
 			);
 			productName = Control;
 			productReference = 6A7368562F19B3CC0065A581 /* Control.app */;
@@ -254,6 +257,7 @@
 				6AE17BC92F25A97600F62D8F /* XCRemoteSwiftPackageReference "Valet" */,
 				6A882B3B2F27AD2D000CAAC3 /* XCRemoteSwiftPackageReference "MimeTypeEnum" */,
 				6A0F10E73067F80C0067E516 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */,
+				6A0F10EA3067F9000067E516 /* XCRemoteSwiftPackageReference "OpenAI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6A7368572F19B3CC0065A581 /* Products */;
@@ -728,6 +732,14 @@
 				revision = 5cbde7099f61fc766d686406bad32258b08ae6eb;
 			};
 		};
+		6A0F10EA3067F9000067E516 /* XCRemoteSwiftPackageReference "OpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MacPaw/OpenAI.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.1;
+			};
+		};
 		6A73688C2F19BDB20065A581 /* XCRemoteSwiftPackageReference "KeychainAccess" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/kishikawakatsumi/KeychainAccess";
@@ -783,6 +795,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6A0F10E73067F80C0067E516 /* XCRemoteSwiftPackageReference "swiftui-cached-async-image" */;
 			productName = CachedAsyncImage;
+		};
+		6A0F10EB3067F9000067E516 /* OpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6A0F10EA3067F9000067E516 /* XCRemoteSwiftPackageReference "OpenAI" */;
+			productName = OpenAI;
 		};
 		6A73688D2F19BDB20065A581 /* KeychainAccess */ = {
 			isa = XCSwiftPackageProductDependency;

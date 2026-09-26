@@ -5,48 +5,38 @@ import SwiftUI
 fileprivate let GarbageData = "Ijwa0213LAjkd"
 
 struct SettingsView: View {
-    @AppStorage(UserDefaultKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultAPIEndpoint
-    @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
     @StateObject private var postAuthKeyBuffer = DebouncedStringObservable(content: GarbageData)
-
-    @AppStorage(UserDefaultClientSideImageService) private var imageServiceName = ClientSideImageService.backend.rawValue
-    @AppStorage(UserDefaultCloudinaryAPIBaseUrl) private var cloudinaryAPIBaseUrl = DefaultCloudinaryAPIEndpoint
-    @AppStorage(UserDefaultCloudName) private var cloudinaryCloudName = ""
-    @AppStorage(UserDefaultPresetName) private var cloudinaryPresetName = ""
 
     @State private var isErrorDialogShown = false
     @State private var dialogError: (any Error)? = nil
 
     let onUpdate: (SettingsUpdate) async throws -> Void
+    @Binding var vm: SettingsViewModel
 
     var body: some View {
         Form {
-            BackendSection(endpointBaseUrl: $endpointBaseUrl, mainSiteUrl: $mainSiteUrl, postAuthKey: $postAuthKeyBuffer.content)
-                .onChange(of: endpointBaseUrl) { _, newValue in
-                    onUpdateErrorHandled(.backend(.init(endpoint: newValue, mainSiteUrl: mainSiteUrl)))
+            BackendSection(endpointBaseUrl: $vm.endpointBaseUrl, mainSiteUrl: $vm.mainSiteUrl, postAuthKey: $postAuthKeyBuffer.content)
+                .onChange(of: vm.endpointBaseUrl) { _, newValue in
+                    onUpdateErrorHandled(.backend(.init(endpoint: newValue, mainSiteUrl: vm.mainSiteUrl)))
                 }
-                .onChange(of: mainSiteUrl) { _, newValue in
-                    onUpdateErrorHandled(.backend(.init(endpoint: endpointBaseUrl, mainSiteUrl: newValue)))
+                .onChange(of: vm.mainSiteUrl) { _, newValue in
+                    onUpdateErrorHandled(.backend(.init(endpoint: vm.endpointBaseUrl, mainSiteUrl: newValue)))
                 }
-            ClientSideImageUploadSection(service: Binding(get: {
-                ClientSideImageService(rawValue: imageServiceName)!
-            }, set: { newValue in
-                imageServiceName = newValue.rawValue
-            }), endpointBaseUrl: $cloudinaryAPIBaseUrl, cloudName: $cloudinaryCloudName, presetName: $cloudinaryPresetName)
-                .onChange(of: imageServiceName) { _, newValue in
-                    onUpdateErrorHandled(.imageService(ClientSideImageService(rawValue: newValue)!))
+            ClientSideImageUploadSection(service: $vm.imageService, endpointBaseUrl: $vm.cloudinaryAPIBaseUrl, cloudName: $vm.cloudinaryCloudName, presetName: $vm.cloudinaryPresetName)
+                .onChange(of: vm.imageService) { _, newValue in
+                    onUpdateErrorHandled(.imageService(newValue))
                 }
-                .onChange(of: cloudinaryAPIBaseUrl) { _, _ in
+                .onChange(of: vm.cloudinaryAPIBaseUrl) { _, _ in
                     if let newConfig = imageUploadConfiguration() {
                         onUpdateErrorHandled(.imageUploadConfig(newConfig))
                     }
                 }
-                .onChange(of: cloudinaryCloudName) { _, _ in
+                .onChange(of: vm.cloudinaryCloudName) { _, _ in
                     if let newConfig = imageUploadConfiguration() {
                         onUpdateErrorHandled(.imageUploadConfig(newConfig))
                     }
                 }
-                .onChange(of: cloudinaryPresetName) { _, _ in
+                .onChange(of: vm.cloudinaryPresetName) { _, _ in
                     if let newConfig = imageUploadConfiguration() {
                         onUpdateErrorHandled(.imageUploadConfig(newConfig))
                     }
@@ -56,7 +46,7 @@ struct SettingsView: View {
         .onChange(of: postAuthKeyBuffer.debounced) { _, newValue in
             Task {
                 let key = newValue.isEmpty ? nil : newValue
-                try? await Credentials.default.setPostAuthKey(newValue: key)
+                try? Credentials.default.setPostAuthKey(newValue: key)
                 onUpdateErrorHandled(.key(newValue))
             }
         }
@@ -81,12 +71,12 @@ struct SettingsView: View {
     }
 
     private func primeUpdate(key: String) -> PrimeUpdate {
-        .init(endpoint: endpointBaseUrl, postAuthKey: key, mainSiteUrl: mainSiteUrl)
+        .init(endpoint: vm.endpointBaseUrl, postAuthKey: key, mainSiteUrl: vm.mainSiteUrl)
     }
 
     private func imageUploadConfiguration() -> ClientSideImageUploadConfiguration? {
-        if let url = URL(string: cloudinaryAPIBaseUrl) {
-            .init(baseURL: url, cloudName: cloudinaryCloudName, presetName: cloudinaryPresetName)
+        if let url = URL(string: vm.cloudinaryAPIBaseUrl) {
+            .init(baseURL: url, cloudName: vm.cloudinaryCloudName, presetName: vm.cloudinaryPresetName)
         } else {
             nil
         }

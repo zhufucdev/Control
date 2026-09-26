@@ -24,16 +24,14 @@ struct ControlApp: App {
         }
     }()
 
-    @AppStorage(UserDefaultKeyEndpointBaseUrl) private var endpointBaseUrl = DefaultAPIEndpoint
-    @AppStorage(UserDefaultMainSiteUrl) private var mainSiteUrl = DefaultMainSiteUrl
-    @AppStorage(UserDefaultClientSideImageService) private var imageServiceName = ClientSideImageService.backend.rawValue
-    @AppStorage(UserDefaultInitialized) private var initialized = false
+    @State private var settings = SettingsViewModel(credentials: .default)
+    @State private var initialized = (try? Credentials.default.initialized) ?? false
     @State var appState: ControlAppState = .locked
 
     func onInitialzie() {
-        switch ClientSideImageService(rawValue: imageServiceName)! {
+        switch settings.imageService {
         case .cloudinary:
-            if let config = try? ClientSideImageUploadConfiguration(userDefaults: .standard) {
+            if let config = try? ClientSideImageUploadConfiguration(credentials: .default) {
                 ClientSideImageUploadConfiguration.shared = config
                 SynchronizeConfiguration.shared.useClientSideImageUpload = ClientSideImageUploadConfiguration.shared
             } else {
@@ -45,44 +43,52 @@ struct ControlApp: App {
 
         Task {
             do {
-                let key = try await Credentials.default.postAuthKey ?? ""
-                let endpoint = endpointBaseUrl
+                try Credentials.default.ensureUserPresence()
+                let key = try Credentials.default.postAuthKey ?? ""
+                let endpoint = settings.endpointBaseUrl
                 if initialized {
                     try? OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpoint, postAuthKey: key)
                     withAnimation {
-                        appState = .ready(endpointBaseUrl: endpoint, postAuthKey: key, mainSiteUrl: mainSiteUrl)
+                        appState = .ready(endpointBaseUrl: endpoint, postAuthKey: key, mainSiteUrl: settings.mainSiteUrl)
                     }
                 } else {
                     appState = .uninitialized
                 }
             } catch is CredentialAccessDenialError {
                 appState = .locked
+            } catch {
+                print("onInitialize, unknown error: \(error)")
             }
         }
     }
 
     func onLandingSubmitted(submission: PrimeUpdate) async throws {
-        try await Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
+        try Credentials.default.setPostAuthKey(newValue: submission.postAuthKey)
         try OpenAPIClientAPIConfiguration.shared.alternate(basePath: submission.endpoint, postAuthKey: submission.postAuthKey)
         appState = .ready(endpointBaseUrl: submission.endpoint, postAuthKey: submission.postAuthKey, mainSiteUrl: submission.mainSiteUrl)
         initialized = true
+        try Credentials.default.setInitialized(newValue: true)
     }
 
     func onSettingsUpdated(_ update: SettingsUpdate) async throws {
         switch update {
         case let .key(key):
             _ = try await withDebounce(key: "onKeyUpdate", for: .seconds(1)) {
-                try await Credentials.default.setPostAuthKey(newValue: key.isEmpty ? nil : key)
-                try OpenAPIClientAPIConfiguration.shared.alternate(basePath: endpointBaseUrl, postAuthKey: key)
-                appState = .ready(endpointBaseUrl: endpointBaseUrl, postAuthKey: key, mainSiteUrl: mainSiteUrl)
+                try Credentials.default.setPostAuthKey(newValue: key.isEmpty ? nil : key)
+                try OpenAPIClientAPIConfiguration.shared.alternate(basePath: settings.endpointBaseUrl, postAuthKey: key)
+                appState = .ready(endpointBaseUrl: settings.endpointBaseUrl, postAuthKey: key, mainSiteUrl: settings.mainSiteUrl)
             }
         case let .backend(backend):
             _ = try await withDebounce(key: "onBackendUpdate", for: .seconds(1)) {
                 do {
+                    try Credentials.default.setEndpointBaseUrl(newValue: backend.endpoint)
+                    try Credentials.default.setMainSiteUrl(newValue: backend.mainSiteUrl)
+                    settings.endpointBaseUrl = backend.endpoint
+                    settings.mainSiteUrl = backend.mainSiteUrl
                     let key = if case let .ready(_, postAuthKey, _) = appState {
                         postAuthKey
                     } else {
-                        try await Credentials.default.postAuthKey ?? ""
+                        try Credentials.default.postAuthKey ?? ""
                     }
                     try OpenAPIClientAPIConfiguration.shared.alternate(
                         basePath: backend.endpoint,
@@ -93,10 +99,18 @@ struct ControlApp: App {
                 }
             }
         case let .imageService(service):
+            try Credentials.default.setClientSideImageService(newValue: service)
+            settings.imageService = service
             SynchronizeConfiguration.shared.useClientSideImageUpload = if service == .backend { nil } else { .shared }
         case let .imageUploadConfig(configuration):
-            ClientSideImageUploadConfiguration.shared = configuration
-            SynchronizeConfiguration.shared.useClientSideImageUpload = .shared
+            _ = try await withDebounce(key: "onImageUploadConfigUpdate", for: .seconds(1)) {
+                try Credentials.default.setCloudName(newValue: configuration.cloudName)
+                try Credentials.default.setPresetName(newValue: configuration.presetName)
+                settings.cloudinaryCloudName = configuration.cloudName
+                settings.cloudinaryPresetName = configuration.presetName
+                ClientSideImageUploadConfiguration.shared = configuration
+                SynchronizeConfiguration.shared.useClientSideImageUpload = .shared
+            }
         }
     }
 
@@ -130,7 +144,7 @@ struct ControlApp: App {
 
         #if os(macOS)
             Settings {
-                SettingsView(onUpdate: onSettingsUpdated)
+                SettingsView(onUpdate: onSettingsUpdated, vm: $settings)
                     .formStyle(.grouped)
                     .frame(maxWidth: 600)
                     .padding()
