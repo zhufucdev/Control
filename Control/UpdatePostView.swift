@@ -500,7 +500,7 @@ fileprivate struct UpdatePostPreview: View {
                 if !page.backForwardList.backList.isEmpty {
                     page.load(page.backForwardList.backList.last!) // save memory
                 }
-                page.load(Data(processedData.utf8), mimeType: "text/html", characterEncoding: .utf8, baseURL: URL(string: "\(OpenAPIClientAPIConfiguration.shared.basePath)/api/update/template")!)
+                page.load(Data(processedData.utf8), mimeType: "text/html", characterEncoding: .utf8, baseURL: URL(string: mainSiteUrl)!)
                 #if DEBUG
                     page.isInspectable = true
                 #endif
