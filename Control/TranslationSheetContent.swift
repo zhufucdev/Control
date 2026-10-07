@@ -38,6 +38,7 @@ struct TranslationSheetContent: View {
                                         state = .translating
                                     }
                                 }
+                                .disabled(targetLocales.isEmpty)
                             }
                         }
                 case .translating:
@@ -132,32 +133,30 @@ private struct StartPage: View {
     @Binding var target: Set<SupportedLocale>
 
     var body: some View {
-        ScrollView {
-            Form {
-                Section {
-                    ForEach(SupportedLocale.allCases) { locale in
-                        Toggle(locale.name, isOn: Binding(get: {
-                            target.contains(locale) || locale == source
-                        }, set: { newValue in
-                            if newValue {
-                                target.insert(locale)
-                            } else {
-                                target.remove(locale)
-                            }
-                        }))
-                        .disabled(locale == source)
-                        #if os(macOS)
-                            .toggleStyle(.checkbox)
-                        #else
-                            .toggleStyle(.switch)
-                        #endif
-                    }
-                } footer: {
-                    Text("Choose one or more languages to translate to.")
+        Form {
+            Section {
+                ForEach(SupportedLocale.allCases) { locale in
+                    Toggle(locale.name, isOn: Binding(get: {
+                        target.contains(locale) || locale == source
+                    }, set: { newValue in
+                        if newValue {
+                            target.insert(locale)
+                        } else {
+                            target.remove(locale)
+                        }
+                    }))
+                    .disabled(locale == source)
+                    #if os(macOS)
+                        .toggleStyle(.checkbox)
+                    #else
+                        .toggleStyle(.switch)
+                    #endif
                 }
+            } footer: {
+                Text("Choose one or more languages to translate to.")
             }
-            .formStyle(.grouped)
         }
+        .formStyle(.grouped)
     }
 }
 
@@ -184,38 +183,36 @@ private struct TranslatingPage<Service: ChatCompletion & Sendable>: View {
     @State private var retryCounter = 0
 
     var body: some View {
-        ScrollView {
-            Form {
-                Section {
-                    ForEach(drafts) { draft in
-                        labelPreferringResult(for: draft, targetLocale: currentTargetLocale)
-                    }
-                } header: {
-                    if let error {
-                        HStack {
-                            Text(error.localizedDescription)
-                                .foregroundStyle(.red)
-                            Spacer()
-                            Button("Retry", systemImage: "arrow.clockwise") {
-                                retryCounter += 1
-                                self.error = nil
-                            }
+        Form {
+            Section {
+                ForEach(drafts) { draft in
+                    labelPreferringResult(for: draft, targetLocale: currentTargetLocale)
+                }
+            } header: {
+                if let error {
+                    HStack {
+                        Text(error.localizedDescription)
+                            .foregroundStyle(.red)
+                        Spacer()
+                        Button("Retry", systemImage: "arrow.clockwise") {
+                            retryCounter += 1
+                            self.error = nil
                         }
-                    } else if !done {
-                        Text(assistantOutput)
-                            .fontWeight(.regular)
-                            .opacity(0.5)
-                            .lineLimit(1)
-                            .truncationMode(.head)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 16)
-                    } else {
-                        Text("Translation steps")
                     }
+                } else if !done {
+                    Text(assistantOutput)
+                        .fontWeight(.regular)
+                        .opacity(0.5)
+                        .lineLimit(1)
+                        .truncationMode(.head)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                } else {
+                    Text("Translation steps")
                 }
             }
-            .formStyle(.grouped)
         }
+        .formStyle(.grouped)
         .task(id: retryCounter) {
             do {
                 try await translate()
@@ -386,21 +383,19 @@ private struct ReviewPage: View {
     @State private var editing: Translating? = nil
 
     var body: some View {
-        ScrollView {
-            Form {
-                Section("Would you like to create the these \(data.count) posts?") {
-                    ForEach(data) { post in
-                        Button {
-                            editing = post
-                        } label: {
-                            getLabel(for: post)
-                        }
-                        .buttonStyle(.plain)
+        Form {
+            Section("Would you like to create the these \(data.count) posts?") {
+                ForEach(data) { post in
+                    Button {
+                        editing = post
+                    } label: {
+                        getLabel(for: post)
                     }
+                    .buttonStyle(.plain)
                 }
             }
-            .formStyle(.grouped)
         }
+        .formStyle(.grouped)
         .sheet(item: $editing) { draft in
             switch draft {
             case let .updatePost(.cooked(change)):
