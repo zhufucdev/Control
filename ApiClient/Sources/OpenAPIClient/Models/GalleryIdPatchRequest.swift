@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct GalleryIdPatchRequest: Sendable, Codable, ParameterConvertible, Hashable {
+public struct GalleryIdPatchRequest: Sendable, Codable, Hashable {
 
     public var locale: SupportedLocale?
     public var tweet: String?

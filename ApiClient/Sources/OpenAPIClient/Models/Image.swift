@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct Image: Sendable, Codable, ParameterConvertible, Hashable {
+public struct Image: Sendable, Codable, Hashable {
 
     /** Image identifier */
     public var id: Int
@@ -39,5 +39,4 @@ public struct Image: Sendable, Codable, ParameterConvertible, Hashable {
 }
 
 
-@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
 extension Image: Identifiable {}

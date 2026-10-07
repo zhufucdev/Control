@@ -13,6 +13,8 @@ Method | HTTP request | Description
 [**imageListGet**](DefaultAPI.md#imagelistget) | **GET** /image/list | List Images
 [**imagePost**](DefaultAPI.md#imagepost) | **POST** /image | Upload Image
 [**imagePut**](DefaultAPI.md#imageput) | **PUT** /image | Assign Image to CDN Resource
+[**stringsByLocaleGet**](DefaultAPI.md#stringsbylocaleget) | **GET** /strings/by-locale | List Strings by Locale Copy
+[**stringsByLocaleLocaleGet**](DefaultAPI.md#stringsbylocalelocaleget) | **GET** /strings/by-locale/{locale} | List Strings by Specific Locale
 [**updateIdDelete**](DefaultAPI.md#updateiddelete) | **DELETE** /update/{id} | Delete Update Post
 [**updateIdGet**](DefaultAPI.md#updateidget) | **GET** /update/{id} | Query Update Post
 [**updateIdPatch**](DefaultAPI.md#updateidpatch) | **PATCH** /update/{id} | Patch Update Post
@@ -373,7 +375,7 @@ This endpoint does not need any parameter.
 
 # **imagePost**
 ```swift
-    open class func imagePost(xAltText: String, xFileName: String, body: URL, completion: @escaping (_ data: ImagePost201Response?, _ error: Error?) -> Void)
+    open class func imagePost(xAltText: String, xFileName: String, contentLength: Int, body: URL, completion: @escaping (_ data: ImagePost201Response?, _ error: Error?) -> Void)
 ```
 
 Upload Image
@@ -387,10 +389,11 @@ import OpenAPIClient
 
 let xAltText = "" // String | Alernative text describing the image content
 let xFileName = "" // String | Name of the original image file
+let contentLength = 987 // Int | 
 let body = URL(string: "https://example.com")! // URL | 
 
 // Upload Image
-DefaultAPI.imagePost(xAltText: xAltText, xFileName: xFileName, body: body) { (response, error) in
+DefaultAPI.imagePost(xAltText: xAltText, xFileName: xFileName, contentLength: contentLength, body: body) { (response, error) in
     guard error == nil else {
         print(error)
         return
@@ -408,6 +411,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **xAltText** | **String** | Alernative text describing the image content | 
  **xFileName** | **String** | Name of the original image file | 
+ **contentLength** | **Int** |  | 
  **body** | **URL** |  | 
 
 ### Return type
@@ -471,6 +475,102 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
  - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **stringsByLocaleGet**
+```swift
+    open class func stringsByLocaleGet(completion: @escaping (_ data: StringsByLocaleGet200Response?, _ error: Error?) -> Void)
+```
+
+List Strings by Locale Copy
+
+
+
+### Example
+```swift
+// The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
+import OpenAPIClient
+
+
+// List Strings by Locale Copy
+DefaultAPI.stringsByLocaleGet() { (response, error) in
+    guard error == nil else {
+        print(error)
+        return
+    }
+
+    if (response) {
+        dump(response)
+    }
+}
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**StringsByLocaleGet200Response**](StringsByLocaleGet200Response.md)
+
+### Authorization
+
+[PostAuthKey](../README.md#PostAuthKey)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **stringsByLocaleLocaleGet**
+```swift
+    open class func stringsByLocaleLocaleGet(locale: String, completion: @escaping (_ data: [String]?, _ error: Error?) -> Void)
+```
+
+List Strings by Specific Locale
+
+
+
+### Example
+```swift
+// The following code samples are still beta. For any issue, please report via http://github.com/OpenAPITools/openapi-generator/issues/new
+import OpenAPIClient
+
+let locale = "locale_example" // String | 
+
+// List Strings by Specific Locale
+DefaultAPI.stringsByLocaleLocaleGet(locale: locale) { (response, error) in
+    guard error == nil else {
+        print(error)
+        return
+    }
+
+    if (response) {
+        dump(response)
+    }
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **locale** | **String** |  | 
+
+### Return type
+
+**[String]**
+
+### Authorization
+
+[PostAuthKey](../README.md#PostAuthKey)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

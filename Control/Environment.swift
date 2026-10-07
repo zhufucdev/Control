@@ -10,3 +10,5 @@ extension EnvironmentValues {
 let DefaultMainSiteUrl = "https://zhufucdev.com"
 let DefaultAPIEndpoint = "\(DefaultMainSiteUrl)/api"
 let DefaultCloudinaryAPIEndpoint = "https://api.cloudinary.com"
+let DefaultOpenAIBaseUrl = "https://api.openai.com/v1"
+let DefaultOpenAIModelName = "gpt-6-luna"

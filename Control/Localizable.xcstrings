@@ -1,0 +1,267 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ Failed to load preview" : {
+
+    },
+    "%@ Please adjust the fields and try again" : {
+
+    },
+    "Add Item" : {
+
+    },
+    "AI Service" : {
+
+    },
+    "Alternative text" : {
+
+    },
+    "Authorization token" : {
+
+    },
+    "Backend" : {
+
+    },
+    "Chinese (Simplified)" : {
+
+    },
+    "Chinese (Traditional)" : {
+
+    },
+    "Choose one or more languages to translate to." : {
+
+    },
+    "Clear image attachement" : {
+
+    },
+    "Close" : {
+
+    },
+    "Cloud name" : {
+
+    },
+    "Cloudinary" : {
+
+    },
+    "Cloudinary API endpoint" : {
+
+    },
+    "Configurations" : {
+
+    },
+    "Continue" : {
+
+    },
+    "Control is locked" : {
+
+    },
+    "Could not pull posts from server" : {
+
+    },
+    "Could not push update post" : {
+
+    },
+    "Could not rewrite EXIF-stripped image: %@" : {
+
+    },
+    "Creating post..." : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete forever" : {
+
+    },
+    "Deleted" : {
+
+    },
+    "Describe this image in brief" : {
+
+    },
+    "details" : {
+
+    },
+    "Draft" : {
+
+    },
+    "Duplicate" : {
+
+    },
+    "Endpoint base URL" : {
+
+    },
+    "English" : {
+
+    },
+    "EXIF removal failed" : {
+
+    },
+    "Failed to pull..." : {
+
+    },
+    "Failed to push to server" : {
+
+    },
+    "From Photos" : {
+
+    },
+    "Gallery" : {
+
+    },
+    "Global" : {
+
+    },
+    "Header" : {
+
+    },
+    "Image read failed" : {
+
+    },
+    "Image upload" : {
+
+    },
+    "Invalid base URL." : {
+
+    },
+    "Invalid configuration" : {
+
+    },
+    "Item was removed. Select another one" : {
+
+    },
+    "Loading preview..." : {
+
+    },
+    "Locale" : {
+
+    },
+    "Main site URL" : {
+
+    },
+    "Model name" : {
+
+    },
+    "New post" : {
+
+    },
+    "Next" : {
+
+    },
+    "No content" : {
+
+    },
+    "No suitable conversion found from PhotosPickerItem to DataUrl" : {
+
+    },
+    "Not implemented" : {
+
+    },
+    "Not supported" : {
+
+    },
+    "OpenAI API endpoint" : {
+
+    },
+    "Pick a moment" : {
+
+    },
+    "Port number is unspecified and cannot be inferred." : {
+
+    },
+    "Post" : {
+
+    },
+    "Post authentication key" : {
+
+    },
+    "Post failed" : {
+
+    },
+    "Preset name" : {
+
+    },
+    "Previous" : {
+
+    },
+    "Pulling posts..." : {
+
+    },
+    "Push" : {
+
+    },
+    "Recover" : {
+
+    },
+    "Removing metadata" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Save" : {
+
+    },
+    "Select an item" : {
+
+    },
+    "Service" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Sharing metadata" : {
+
+    },
+    "Status update" : {
+
+    },
+    "Submission unsupported." : {
+
+    },
+    "Submit" : {
+
+    },
+    "Target locale" : {
+
+    },
+    "This platform does not support photo captrue" : {
+
+    },
+    "Translate" : {
+
+    },
+    "Translating to %@..." : {
+
+    },
+    "Translation steps" : {
+
+    },
+    "Tweet" : {
+
+    },
+    "Unlock" : {
+
+    },
+    "Updates" : {
+
+    },
+    "Updating post..." : {
+
+    },
+    "Uploading image..." : {
+
+    },
+    "What's up?" : {
+
+    },
+    "Would you like to create the these %lld posts?" : {
+
+    }
+  },
+  "version" : "1.3"
+}

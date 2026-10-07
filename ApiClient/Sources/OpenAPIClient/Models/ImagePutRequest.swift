@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ImagePutRequest: Sendable, Codable, ParameterConvertible, Hashable {
+public struct ImagePutRequest: Sendable, Codable, Hashable {
 
     /** CDN URL, publicly accessible */
     public var url: String

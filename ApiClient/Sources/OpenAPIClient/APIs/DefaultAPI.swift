@@ -16,7 +16,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: JSONValue
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func galleryIdDelete(id: Int, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> JSONValue {
         return try await galleryIdDeleteWithRequestBuilder(id: id, apiConfiguration: apiConfiguration).execute().body
     }
@@ -60,7 +59,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: JSONValue
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func galleryIdGet(id: Int, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> JSONValue {
         return try await galleryIdGetWithRequestBuilder(id: id, apiConfiguration: apiConfiguration).execute().body
     }
@@ -105,7 +103,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: GalleryItem
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func galleryIdPatch(id: Int, galleryIdPatchRequest: GalleryIdPatchRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> GalleryItem {
         return try await galleryIdPatchWithRequestBuilder(id: id, galleryIdPatchRequest: galleryIdPatchRequest, apiConfiguration: apiConfiguration).execute().body
     }
@@ -151,7 +148,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: [GalleryItem]
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func galleryListGet(locale: [String]? = nil, limit: Int? = nil, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> [GalleryItem] {
         return try await galleryListGetWithRequestBuilder(locale: locale, limit: limit, apiConfiguration: apiConfiguration).execute().body
     }
@@ -197,7 +193,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: Int
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func galleryPut(galleryPutRequest: GalleryPutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Int {
         return try await galleryPutWithRequestBuilder(galleryPutRequest: galleryPutRequest, apiConfiguration: apiConfiguration).execute().body
     }
@@ -238,7 +233,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: Image
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func imageIdGet(id: Int, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Image {
         return try await imageIdGetWithRequestBuilder(id: id, apiConfiguration: apiConfiguration).execute().body
     }
@@ -281,7 +275,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: [Image]
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func imageListGet(apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> [Image] {
         return try await imageListGetWithRequestBuilder(apiConfiguration: apiConfiguration).execute().body
     }
@@ -319,13 +312,13 @@ open class DefaultAPI {
      
      - parameter xAltText: (header) Alernative text describing the image content 
      - parameter xFileName: (header) Name of the original image file 
+     - parameter contentLength: (header)  
      - parameter body: (body)  
      - parameter apiConfiguration: The configuration for the http request.
      - returns: ImagePost201Response
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
-    open class func imagePost(xAltText: String, xFileName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> ImagePost201Response {
-        return try await imagePostWithRequestBuilder(xAltText: xAltText, xFileName: xFileName, body: body, apiConfiguration: apiConfiguration).execute().body
+    open class func imagePost(xAltText: String, xFileName: String, contentLength: Int, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> ImagePost201Response {
+        return try await imagePostWithRequestBuilder(xAltText: xAltText, xFileName: xFileName, contentLength: contentLength, body: body, apiConfiguration: apiConfiguration).execute().body
     }
 
     /**
@@ -337,11 +330,12 @@ open class DefaultAPI {
        - name: PostAuthKey
      - parameter xAltText: (header) Alernative text describing the image content 
      - parameter xFileName: (header) Name of the original image file 
+     - parameter contentLength: (header)  
      - parameter body: (body)  
      - parameter apiConfiguration: The configuration for the http request.
      - returns: RequestBuilder<ImagePost201Response> 
      */
-    open class func imagePostWithRequestBuilder(xAltText: String, xFileName: String, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<ImagePost201Response> {
+    open class func imagePostWithRequestBuilder(xAltText: String, xFileName: String, contentLength: Int, body: URL, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<ImagePost201Response> {
         let localVariablePath = "/image"
         let localVariableURLString = apiConfiguration.basePath + localVariablePath
         let localVariableParameters = ["body": body]
@@ -352,6 +346,7 @@ open class DefaultAPI {
             "Content-Type": "application/octet-stream",
             "X-Alt-Text": xAltText.asParameter(codableHelper: apiConfiguration.codableHelper),
             "X-File-Name": xFileName.asParameter(codableHelper: apiConfiguration.codableHelper),
+            "Content-Length": contentLength.asParameter(codableHelper: apiConfiguration.codableHelper),
         ]
 
         let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
@@ -368,7 +363,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: Int
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func imagePut(imagePutRequest: ImagePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Int {
         return try await imagePutWithRequestBuilder(imagePutRequest: imagePutRequest, apiConfiguration: apiConfiguration).execute().body
     }
@@ -403,13 +397,93 @@ open class DefaultAPI {
     }
 
     /**
+     List Strings by Locale Copy
+     
+     - parameter apiConfiguration: The configuration for the http request.
+     - returns: StringsByLocaleGet200Response
+     */
+    open class func stringsByLocaleGet(apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> StringsByLocaleGet200Response {
+        return try await stringsByLocaleGetWithRequestBuilder(apiConfiguration: apiConfiguration).execute().body
+    }
+
+    /**
+     List Strings by Locale Copy
+     - GET /strings/by-locale
+     - 
+     - API Key:
+       - type: apiKey X-POST-AUTH-KEY (HEADER)
+       - name: PostAuthKey
+     - parameter apiConfiguration: The configuration for the http request.
+     - returns: RequestBuilder<StringsByLocaleGet200Response> 
+     */
+    open class func stringsByLocaleGetWithRequestBuilder(apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<StringsByLocaleGet200Response> {
+        let localVariablePath = "/strings/by-locale"
+        let localVariableURLString = apiConfiguration.basePath + localVariablePath
+        let localVariableParameters: [String: any Sendable]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: (any Sendable)?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<StringsByLocaleGet200Response>.Type = apiConfiguration.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true, apiConfiguration: apiConfiguration)
+    }
+
+    /**
+     List Strings by Specific Locale
+     
+     - parameter locale: (path)  
+     - parameter apiConfiguration: The configuration for the http request.
+     - returns: [String]
+     */
+    open class func stringsByLocaleLocaleGet(locale: String, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> [String] {
+        return try await stringsByLocaleLocaleGetWithRequestBuilder(locale: locale, apiConfiguration: apiConfiguration).execute().body
+    }
+
+    /**
+     List Strings by Specific Locale
+     - GET /strings/by-locale/{locale}
+     - 
+     - API Key:
+       - type: apiKey X-POST-AUTH-KEY (HEADER)
+       - name: PostAuthKey
+     - parameter locale: (path)  
+     - parameter apiConfiguration: The configuration for the http request.
+     - returns: RequestBuilder<[String]> 
+     */
+    open class func stringsByLocaleLocaleGetWithRequestBuilder(locale: String, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) -> RequestBuilder<[String]> {
+        var localVariablePath = "/strings/by-locale/{locale}"
+        let localePreEscape = "\(APIHelper.mapValueToPathItem(locale))"
+        let localePostEscape = localePreEscape.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? ""
+        localVariablePath = localVariablePath.replacingOccurrences(of: "{locale}", with: localePostEscape, options: .literal, range: nil)
+        let localVariableURLString = apiConfiguration.basePath + localVariablePath
+        let localVariableParameters: [String: any Sendable]? = nil
+
+        let localVariableUrlComponents = URLComponents(string: localVariableURLString)
+
+        let localVariableNillableHeaders: [String: (any Sendable)?] = [
+            :
+        ]
+
+        let localVariableHeaderParameters = APIHelper.rejectNilHeaders(localVariableNillableHeaders)
+
+        let localVariableRequestBuilder: RequestBuilder<[String]>.Type = apiConfiguration.requestBuilderFactory.getBuilder()
+
+        return localVariableRequestBuilder.init(method: "GET", URLString: (localVariableUrlComponents?.string ?? localVariableURLString), parameters: localVariableParameters, headers: localVariableHeaderParameters, requiresAuthentication: true, apiConfiguration: apiConfiguration)
+    }
+
+    /**
      Delete Update Post
      
      - parameter id: (path)  
      - parameter apiConfiguration: The configuration for the http request.
      - returns: UpdatePost
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updateIdDelete(id: Int, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> UpdatePost {
         return try await updateIdDeleteWithRequestBuilder(id: id, apiConfiguration: apiConfiguration).execute().body
     }
@@ -453,7 +527,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: UpdatePost
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updateIdGet(id: Int, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> UpdatePost {
         return try await updateIdGetWithRequestBuilder(id: id, apiConfiguration: apiConfiguration).execute().body
     }
@@ -498,7 +571,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: UpdatePost
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updateIdPatch(id: String, updateIdPatchRequest: UpdateIdPatchRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> UpdatePost {
         return try await updateIdPatchWithRequestBuilder(id: id, updateIdPatchRequest: updateIdPatchRequest, apiConfiguration: apiConfiguration).execute().body
     }
@@ -544,7 +616,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: [UpdatePost]
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updateListGet(locale: [String]? = nil, limit: Int? = nil, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> [UpdatePost] {
         return try await updateListGetWithRequestBuilder(locale: locale, limit: limit, apiConfiguration: apiConfiguration).execute().body
     }
@@ -590,7 +661,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: Int
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updatePut(updatePutRequest: UpdatePutRequest, apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> Int {
         return try await updatePutWithRequestBuilder(updatePutRequest: updatePutRequest, apiConfiguration: apiConfiguration).execute().body
     }
@@ -630,7 +700,6 @@ open class DefaultAPI {
      - parameter apiConfiguration: The configuration for the http request.
      - returns: String
      */
-    @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
     open class func updateTemplateGet(apiConfiguration: OpenAPIClientAPIConfiguration = OpenAPIClientAPIConfiguration.shared) async throws(ErrorResponse) -> String {
         return try await updateTemplateGetWithRequestBuilder(apiConfiguration: apiConfiguration).execute().body
     }

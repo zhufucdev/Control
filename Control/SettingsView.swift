@@ -2,7 +2,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-fileprivate let GarbageData = "Ijwa0213LAjkd"
+private let GarbageData = "Ijwa0213LAjkd"
 
 struct SettingsView: View {
     @StateObject private var postAuthKeyBuffer = DebouncedStringObservable(content: GarbageData)
@@ -41,6 +41,22 @@ struct SettingsView: View {
                         onUpdateErrorHandled(.imageUploadConfig(newConfig))
                     }
                 }
+            AIServiceSection(openAIBaseUrl: $vm.openAIBaseUrl, openAIAPIKey: $vm.openAIApiKey, openAIModelName: $vm.openAIModelName)
+                .onChange(of: vm.openAIApiKey) { _, _ in
+                    if let newConfig = openAIServiceConfiguration() {
+                        onUpdateErrorHandled(.openAIServiceConfig(newConfig))
+                    }
+                }
+                .onChange(of: vm.openAIBaseUrl) { _, _ in
+                    if let newConfig = openAIServiceConfiguration() {
+                        onUpdateErrorHandled(.openAIServiceConfig(newConfig))
+                    }
+                }
+                .onChange(of: vm.openAIModelName) { _, _ in
+                    if let newConfig = openAIServiceConfiguration() {
+                        onUpdateErrorHandled(.openAIServiceConfig(newConfig))
+                    }
+                }
         }
         .navigationTitle("Settings")
         .onChange(of: postAuthKeyBuffer.debounced) { _, newValue in
@@ -77,6 +93,14 @@ struct SettingsView: View {
     private func imageUploadConfiguration() -> ClientSideImageUploadConfiguration? {
         if let url = URL(string: vm.cloudinaryAPIBaseUrl) {
             .init(baseURL: url, cloudName: vm.cloudinaryCloudName, presetName: vm.cloudinaryPresetName)
+        } else {
+            nil
+        }
+    }
+
+    private func openAIServiceConfiguration() -> OpenAIServiceConfiguration? {
+        if let url = URL(string: vm.openAIBaseUrl) {
+            OpenAIServiceConfiguration(baseUrl: url, apiKey: vm.openAIApiKey, modelName: vm.openAIModelName)
         } else {
             nil
         }
@@ -144,6 +168,20 @@ struct SettingsView: View {
             }
         }
     }
+
+    struct AIServiceSection: View {
+        @Binding var openAIBaseUrl: String
+        @Binding var openAIAPIKey: String
+        @Binding var openAIModelName: String
+
+        var body: some View {
+            Section("AI Service") {
+                TextField("OpenAI API endpoint", text: $openAIBaseUrl)
+                TextField("Authorization token", text: $openAIAPIKey)
+                TextField("Model name", text: $openAIModelName)
+            }
+        }
+    }
 }
 
 enum SettingsUpdate {
@@ -151,6 +189,7 @@ enum SettingsUpdate {
     case backend(BackendUpdate)
     case imageService(ClientSideImageService)
     case imageUploadConfig(ClientSideImageUploadConfiguration)
+    case openAIServiceConfig(OpenAIServiceConfiguration)
 }
 
 struct BackendUpdate {
@@ -158,7 +197,7 @@ struct BackendUpdate {
     let mainSiteUrl: String
 }
 
-fileprivate final class DebouncedStringObservable: ObservableObject {
+private final class DebouncedStringObservable: ObservableObject {
     @Published var content: String
     @Published var debounced: String
     private var subscriptions = Set<AnyCancellable>()

@@ -22,7 +22,7 @@ struct UpdatePostView: View {
         Group {
             switch viewModel.state {
             case let .editor(editor):
-                Editor(editor: editor, model: model, takePhoto: viewModel.openCameraForCapture, onSave: onSave)
+                UpdatePostEditor(editor: editor, model: model, takePhoto: viewModel.openCameraForCapture, onSave: onSave)
                     .transition(.flipFromTop)
                     .environmentObject(templateCache)
             case let .camera(onCapture, onCancel):
@@ -55,12 +55,12 @@ struct UpdatePostView: View {
     }
 }
 
-fileprivate final class UpdatePostViewModel: ObservableObject {
-    @Published private(set) var state: ViewState
-    @Published var editor: EditorViewModel
+final class UpdatePostViewModel: ObservableObject {
+    @Published private(set) var state: UpdatePostViewState
+    @Published var editor: UpdateEditorViewModel
 
     init() {
-        let editor = EditorViewModel()
+        let editor = UpdateEditorViewModel()
         self.editor = editor
         state = .editor(model: editor)
     }
@@ -84,15 +84,15 @@ fileprivate final class UpdatePostViewModel: ObservableObject {
     }
 }
 
-fileprivate enum ViewState {
-    case editor(model: EditorViewModel)
+enum UpdatePostViewState {
+    case editor(model: UpdateEditorViewModel)
     case camera(onCapture: (CGImage) -> Void, onCancel: () -> Void)
 }
 
-fileprivate struct Editor: View {
+struct UpdatePostEditor: View {
     @Environment(\.horizontalSizeClass) private var screenWidth
 
-    @StateObject var editor: EditorViewModel
+    @StateObject var editor: UpdateEditorViewModel
     let model: CachedUpdatePost
     let takePhoto: () -> Void
     let onSave: () -> Void
@@ -246,7 +246,7 @@ fileprivate struct Editor: View {
     }
 }
 
-fileprivate final class EditorViewModel: ObservableObject {
+final class UpdateEditorViewModel: ObservableObject {
     private var isCopying = false
 
     @Published var isEditing = false
@@ -445,7 +445,7 @@ fileprivate struct UpdatePostPreview: View {
     @Environment(\.mainSiteUrl) var mainSiteUrl
     @EnvironmentObject var templateCache: TemplateCache
 
-    @StateObject var editor: EditorViewModel
+    @StateObject var editor: UpdateEditorViewModel
     @State private var state: Result<WebPage, any Error>? = nil
     @AppStorage("updatePostCardHeight") private var containerHeight: Double = 400
 
@@ -566,7 +566,7 @@ fileprivate struct UpdatePostPreview: View {
     }
 }
 
-fileprivate class TemplateCache: ObservableObject {
+class TemplateCache: ObservableObject {
     @Published var source: String?
     @Published var webPage: WebPage?
 }

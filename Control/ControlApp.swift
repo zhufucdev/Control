@@ -1,3 +1,4 @@
+import OpenAI
 import OpenAPIClient
 import SDWebImage
 import SDWebImageSVGCoder
@@ -26,7 +27,7 @@ struct ControlApp: App {
 
     @State private var settings = SettingsViewModel(credentials: .default)
     @State private var initialized = (try? Credentials.default.initialized) ?? false
-    @State var appState: ControlAppState = .locked
+    @State private var appState: ControlAppState = .locked
 
     func onInitialzie() {
         switch settings.imageService {
@@ -39,6 +40,14 @@ struct ControlApp: App {
             }
         case .backend:
             SynchronizeConfiguration.shared.useClientSideImageUpload = nil
+        }
+
+        do {
+            if let baseUrl = URL(string: settings.openAIBaseUrl) {
+                OpenAIService.shared = try OpenAIService(config: .init(baseUrl: baseUrl, apiKey: settings.openAIApiKey, modelName: settings.openAIModelName))
+            }
+        } catch {
+            print("onInitialize, OpenAI service error: \(error)")
         }
 
         Task {
@@ -110,6 +119,13 @@ struct ControlApp: App {
                 settings.cloudinaryPresetName = configuration.presetName
                 ClientSideImageUploadConfiguration.shared = configuration
                 SynchronizeConfiguration.shared.useClientSideImageUpload = .shared
+            }
+        case let .openAIServiceConfig(config):
+            _ = try await withDebounce(key: "openAIService", for: .seconds(1)) {
+                try Credentials.default.setOpenAIBaseUrl(newValue: config.baseUrl.absoluteString)
+                try Credentials.default.setOpenAIApiKey(newValue: config.apiKey)
+                try Credentials.default.setOpenAIModelName(newValue: config.modelName)
+                OpenAIService.shared = try OpenAIService(config: config)
             }
         }
     }

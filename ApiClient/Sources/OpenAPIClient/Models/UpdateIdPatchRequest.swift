@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdateIdPatchRequest: Sendable, Codable, ParameterConvertible, Hashable {
+public struct UpdateIdPatchRequest: Sendable, Codable, Hashable {
 
     /** Target locale of this post */
     public var locale: SupportedLocale?

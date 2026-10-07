@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct UpdatePostCover: Sendable, Codable, ParameterConvertible, Hashable {
+public struct UpdatePostCover: Sendable, Codable, Hashable {
 
     /** Image URL */
     public var image: String
@@ -39,5 +39,4 @@ public struct UpdatePostCover: Sendable, Codable, ParameterConvertible, Hashable
 }
 
 
-@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
 extension UpdatePostCover: Identifiable {}

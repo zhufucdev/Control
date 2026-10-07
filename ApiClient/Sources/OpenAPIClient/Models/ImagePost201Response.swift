@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ImagePost201Response: Sendable, Codable, ParameterConvertible, Hashable {
+public struct ImagePost201Response: Sendable, Codable, Hashable {
 
     /** Image identifier in plain text */
     public var id: Int
@@ -34,5 +34,4 @@ public struct ImagePost201Response: Sendable, Codable, ParameterConvertible, Has
 }
 
 
-@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
 extension ImagePost201Response: Identifiable {}

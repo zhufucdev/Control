@@ -5,6 +5,15 @@ import OpenAPIClient
 import SwiftData
 import UniformTypeIdentifiers
 
+fileprivate extension URL {
+    func getFileSize(fileManager: FileManager) throws -> Int {
+        guard isFileURL, let filePath = try resourceValues(forKeys: [.canonicalPathKey]).canonicalPath else {
+            throw URLError(.unsupportedURL)
+        }
+        return try fileManager.attributesOfItem(atPath: filePath)[.size] as! Int
+    }
+}
+
 extension CachedUpdatePost {
     @MainActor
     func pushToBackend(configuration: SynchronizeConfiguration = .shared) -> AsyncThrowingStream<PushSynchronizeState, any Error> {
@@ -27,7 +36,7 @@ extension CachedUpdatePost {
                         } else {
                             let escapedAltText = cover.alt.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
                             let escapedFileName = url.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!
-                            let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: escapedAltText, xFileName: escapedFileName, body: url)
+                            let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: escapedAltText, xFileName: escapedFileName, contentLength: try url.getFileSize(fileManager: .default), body: url)
                             rb.onProgressReady = { progress in
                                 stream.yield(.uploadingImage(progress: progress))
                             }
@@ -69,7 +78,7 @@ enum PushSynchronizeState: Equatable {
 
 extension [CachedUpdatePost] {
     func pullFromBackend() async throws -> Diff<UpdatePost> {
-        let posts = Set(try await DefaultAPI.updateListGet())
+        let posts = try Set(await DefaultAPI.updateListGet())
         let cache = Set(map(UpdatePost.init))
         return Diff(old: cache, new: posts)
     }
@@ -107,7 +116,7 @@ enum PullSynchronizeState {
 
 extension [CachedGalleryItem] {
     func pullFromBackend() async throws -> Diff<GalleryItem> {
-        let gallery = Set(try await DefaultAPI.galleryListGet())
+        let gallery = try Set(await DefaultAPI.galleryListGet())
         let cache = Set(map(GalleryItem.init))
         return Diff(old: cache, new: gallery)
     }
@@ -126,9 +135,9 @@ extension CachedGalleryItem {
                         if let clientSideUpload = configuration.useClientSideImageUpload {
                             for try await state in try DefaultClientSideImageUpload.upload(fileUrl, configuration: clientSideUpload) {
                                 switch state {
-                                case .uploading(let progress):
+                                case let .uploading(progress):
                                     stream.yield(.uploadingImage(progress: progress))
-                                case .completed(let resource):
+                                case let .completed(resource):
                                     let serverImage = try await DefaultAPI.imagePut(imagePutRequest: .init(url: resource.absoluteString, alt: self.alt))
                                     imageId = serverImage
                                 default: break // does not break out of the loop
@@ -137,7 +146,7 @@ extension CachedGalleryItem {
                         } else {
                             let escapedAltText = self.alt.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self.alt
                             let escapedFileName = fileUrl.lastPathComponent.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? fileUrl.lastPathComponent
-                            let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: escapedAltText, xFileName: escapedFileName, body: fileUrl)
+                            let rb = DefaultAPI.imagePostWithRequestBuilder(xAltText: escapedAltText, xFileName: escapedFileName, contentLength: try fileUrl.getFileSize(fileManager: .default), body: fileUrl)
                             rb.onProgressReady = { progress in
                                 stream.yield(.uploadingImage(progress: progress))
                             }
@@ -268,7 +277,7 @@ enum ClientSideImageUploadError: Error {
     case noResponse
 }
 
-fileprivate extension Data {
+private extension Data {
     mutating func append(
         _ string: String,
         encoding: String.Encoding = .utf8
@@ -280,13 +289,13 @@ fileprivate extension Data {
     }
 }
 
-fileprivate struct MultipartRequest {
-    public let boundary: String
+private struct MultipartRequest {
+    let boundary: String
 
     private let separator: String = "\r\n"
     private var data: Data
 
-    public init(boundary: String = UUID().uuidString) {
+    init(boundary: String = UUID().uuidString) {
         self.boundary = boundary
         data = .init()
     }
@@ -317,7 +326,7 @@ fileprivate struct MultipartRequest {
         key: String,
         fileName: String,
         fileData: Data,
-        fileMimeType: String? = nil,
+        fileMimeType: String? = nil
     ) {
         appendBoundarySeparator()
         data.append(disposition(key) + "; filename=\"\(fileName)\"" + separator)

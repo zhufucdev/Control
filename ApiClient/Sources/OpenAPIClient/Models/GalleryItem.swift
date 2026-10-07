@@ -7,10 +7,11 @@
 
 import Foundation
 
-public struct GalleryItem: Sendable, Codable, ParameterConvertible, Hashable {
+public struct GalleryItem: Sendable, Codable, Hashable {
 
     /** Gallery item Identifier */
     public var id: Int
+    /** Target locale, null if it's for global audience so no specific locale */
     public var locale: SupportedLocale?
     /** Comment on this item */
     public var tweet: String?
@@ -58,5 +59,4 @@ public struct GalleryItem: Sendable, Codable, ParameterConvertible, Hashable {
 }
 
 
-@available(iOS 13, tvOS 13, watchOS 6, macOS 10.15, *)
 extension GalleryItem: Identifiable {}

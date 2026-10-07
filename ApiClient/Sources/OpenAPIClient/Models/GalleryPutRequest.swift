@@ -7,8 +7,9 @@
 
 import Foundation
 
-public struct GalleryPutRequest: Sendable, Codable, ParameterConvertible, Hashable {
+public struct GalleryPutRequest: Sendable, Codable, Hashable {
 
+    /** Target locale, null if global */
     public var locale: SupportedLocale?
     /** Comment on this item */
     public var tweet: String?

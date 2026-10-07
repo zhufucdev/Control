@@ -10,6 +10,7 @@ struct UpdateTabView: View {
     @State private var pullState: PullState? = nil
     @State private var columnVisibility: NavigationSplitViewVisibility = .doubleColumn
     @State private var syncId = 0
+    @State private var translating: CachedUpdatePost? = nil
 
     let onSettingsUpdated: (SettingsUpdate) async throws -> Void
 
@@ -33,6 +34,8 @@ struct UpdateTabView: View {
                 Task {
                     await pushDelete(id: item.id)
                 }
+            } onTranslate: { item in
+                translating = item
             }
             .toolbar {
                 #if os(iOS)
@@ -100,6 +103,7 @@ struct UpdateTabView: View {
                 Text(content)
             }
         })
+        .sheet(item: $translating, content: translationSheet)
     }
 
     private func pushSync(targetItem: CachedUpdatePost) async {
@@ -129,151 +133,31 @@ struct UpdateTabView: View {
             pullTrialId += 1
         }
     }
-}
 
-struct PostsList: View {
-    @Binding var selection: Set<PersistentIdentifier>
-    let onSettingsUpdated: (SettingsUpdate) async throws -> Void
-    let onTrashItem: (CachedUpdatePost) -> Void
-    let onDeleteItem: (CachedUpdatePost) -> Void
-
-    @Environment(\.modelContext) private var modelContext
-    #if os(iOS)
-        @State private var showCrudToolbarItems = false
-    #endif
-
-    @Query(filter: #Predicate { post in !post.trashed }, sort: \CachedUpdatePost.created, order: .reverse)
-    private var items: [CachedUpdatePost]
-    @Query(filter: #Predicate { post in post.trashed }, sort: \CachedUpdatePost.created, order: .reverse)
-    private var trashedItems: [CachedUpdatePost]
-
-    @State private var isDeletedExpanded = false
-
-    var body: some View {
-        List(selection: $selection) {
-            ForEach(items, id: \.persistentModelID) { item in
-                buildListItem(for: item)
-                    .swipeActions {
-                        Button(role: .destructive) {
-                            trashItems([item])
+    private func translationSheet(for translating: CachedUpdatePost) -> some View {
+        TranslationSheetContent(
+            translating: .updatePost(.raw(UpdatePost(cache: translating))),
+            onSubmit: { translations in
+                for translation in translations {
+                    switch translation {
+                    case let .updatePost(.cooked(c)):
+                        let cache = CachedUpdatePost(from: c.after)
+                        cache.id = -1
+                        Task {
+                            await pushSync(targetItem: cache)
+                            pullTrialId += 1
                         }
-                    }
-            }
-            Section("Deleted", isExpanded: $isDeletedExpanded) {
-                ForEach(trashedItems, id: \.persistentModelID) { item in
-                    buildListItem(for: item)
-                        .swipeActions {
-                            Button("Recover", systemImage: "arrow.up.trash") {
-                                recoverItems([item])
-                            }
-                            Button(role: .destructive) {
-                                deleteItems([item])
-                            }
-                        }
-                }
-            }
-        }
-        .animation(.spring, value: items)
-        #if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .onDeleteCommand {
-                trashItems(items.filter { selection.contains($0.persistentModelID) })
-                deleteItems(trashedItems.filter { selection.contains($0.persistentModelID) })
-            }
-        #endif
-            .toolbar {
-                #if os(iOS)
-                    if showCrudToolbarItems {
-                        ToolbarItemGroup(placement: .bottomBar) {
-                            Button(role: .destructive) {
-                                trashItems(items.filter { selection.contains($0.persistentModelID) })
-                                deleteItems(trashedItems.filter { selection.contains($0.persistentModelID) })
-                            }
-                            Button("Recover", systemImage: "arrow.up.trash") {
-                                recoverItems(trashedItems.filter { selection.contains($0.persistentModelID) })
-                            }
-                        }
-                    }
-                #endif
-                ToolbarItemGroup {
-                    #if os(iOS)
-                        NavigationLink {
-                            SettingsView(onUpdate: onSettingsUpdated)
-                        } label: {
-                            Label("Settings", systemImage: "gear")
-                        }
-                    #endif
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    default:
+                        break
                     }
                 }
-            }
-        #if os(iOS)
-            .onChange(of: selection) { _, newValue in
-                withAnimation {
-                    showCrudToolbarItems = !newValue.isEmpty
+                do {
+                    try modelContext.save()
+                } catch {
+                    print("UpdateTabView, translationSheet, onSubmit, modelContext.save, \(error)")
                 }
             }
-        #endif
-    }
-
-    private func buildListItem(for: CachedUpdatePost) -> some View {
-        LabeledContent(`for`.title) {
-            if !`for`.draft {
-                Text(`for`.summary)
-            } else {
-                Text("Draft")
-            }
-        }
-        .contextMenu {
-            Button("Duplicate", systemImage: "plus.square.on.square") {
-                duplicateItem(item: `for`)
-            }
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = CachedUpdatePost()
-            modelContext.insert(newItem)
-            try? modelContext.save()
-        }
-    }
-
-    private func trashItems<S>(_ items: S) where S: Sequence, S.Element == CachedUpdatePost {
-        withAnimation {
-            for item in items {
-                item.trashed = true
-                onTrashItem(item)
-            }
-        }
-    }
-
-    private func recoverItems<S>(_ items: S) where S: Sequence, S.Element == CachedUpdatePost {
-        withAnimation {
-            for item in items {
-                item.trashed = false
-                onTrashItem(item)
-            }
-        }
-    }
-
-    private func deleteItems<S>(_ items: S) where S: Sequence, S.Element == CachedUpdatePost {
-        withAnimation {
-            for item in items {
-                onDeleteItem(item)
-                modelContext.delete(item)
-            }
-        }
-    }
-
-    private func duplicateItem(item: CachedUpdatePost) {
-        withAnimation {
-            var post = UpdatePost(cache: item)
-            post.id = -1
-            modelContext.insert(CachedUpdatePost(from: post))
-            try? modelContext.save()
-        }
+        )
     }
 }
 

@@ -4,7 +4,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **Int** | Gallery item Identifier | 
-**locale** | [**SupportedLocale**](SupportedLocale.md) |  | 
+**locale** | [**SupportedLocale**](SupportedLocale.md) | Target locale, null if it&#39;s for global audience so no specific locale | 
 **tweet** | **String** | Comment on this item | 
 **image** | **String** | Image identifier | 
 **created** | **Date** | Item creation time in ISO format | 

@@ -13,3 +13,9 @@ extension SupportedLocale {
         }
     }
 }
+
+extension SupportedLocale: @retroactive Identifiable {
+    public var id: String {
+        self.rawValue
+    }
+}
