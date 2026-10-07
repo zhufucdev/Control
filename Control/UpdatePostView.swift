@@ -421,7 +421,7 @@ fileprivate struct ShapeSelect: View {
                                     .frame(width: 14)
                                     .padding(5)
                             } else {
-                                WebImage(url: URL(string: mainSiteUrl)?.appending(components: "shape", shape.rawValue)) { image in
+                                WebImage(url: URL(shape: shape, mainSiteUrl: mainSiteUrl)) { image in
                                     image.resizable().aspectRatio(contentMode: .fit)
                                 } placeholder: {
                                     ProgressView()
@@ -553,7 +553,7 @@ fileprivate struct UpdatePostPreview: View {
     }
 
     private func preprocessHtml(content: String) throws -> String {
-        let maskUrl = URL(string: mainSiteUrl)!.appending(components: "shape", editor.mask.rawValue).absoluteString
+        let maskUrl = URL(shape: editor.mask, mainSiteUrl: mainSiteUrl)!.absoluteString
         let coverUrl = editor.cover?.absoluteString.replacingOccurrences(of: "file://", with: "kfile://") ?? ""
 
         return content.replacingOccurrences(of: "${header.leading}", with: editor.header)
