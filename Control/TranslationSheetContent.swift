@@ -146,7 +146,11 @@ private struct StartPage: View {
                             }
                         }))
                         .disabled(locale == source)
-                        .toggleStyle(.checkbox)
+                        #if os(macOS)
+                            .toggleStyle(.checkbox)
+                        #else
+                            .toggleStyle(.switch)
+                        #endif
                     }
                 } footer: {
                     Text("Choose one or more languages to translate to.")

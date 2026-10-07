@@ -11,6 +11,7 @@ struct PostsList: View {
     let onTranslate: (CachedUpdatePost) -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.settingsViewModel) private var settings
     #if os(iOS)
         @State private var showCrudToolbarItems = false
     #endif
@@ -76,7 +77,11 @@ struct PostsList: View {
                 ToolbarItemGroup {
                     #if os(iOS)
                         NavigationLink {
-                            SettingsView(onUpdate: onSettingsUpdated)
+                            if let settings {
+                                SettingsView(onUpdate: onSettingsUpdated, vm: settings)
+                            } else {
+                                ProgressView()
+                            }
                         } label: {
                             Label("Settings", systemImage: "gear")
                         }

@@ -154,6 +154,7 @@ struct ControlApp: App {
                 .environment(\.postAuthKey, postAuthKey)
                 .environment(\.endpointBaseUrl, endpoint)
                 .environment(\.mainSiteUrl, mainSite)
+                .environment(\.settingsViewModel, $settings)
                 .modelContainer(sharedModelContainer)
             }
         }

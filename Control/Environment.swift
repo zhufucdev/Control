@@ -5,6 +5,7 @@ extension EnvironmentValues {
     @Entry var postAuthKey: String = ""
     @Entry var endpointBaseUrl: String = DefaultAPIEndpoint
     @Entry var mainSiteUrl: String = DefaultMainSiteUrl
+    @Entry var settingsViewModel: Binding<SettingsViewModel>? = nil
 }
 
 let DefaultMainSiteUrl = "https://zhufucdev.com"
