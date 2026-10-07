@@ -91,8 +91,7 @@ struct TranslationSheetContent: View {
                             Button("Submit", systemImage: "checkmark") {
                                 onSubmit(drafts.compactMap {
                                     switch $0 {
-                                    case let .updatePostHeader(.cooked(c), _),
-                                         let .updatePost(.cooked(c)):
+                                    case let .updatePostHeader(.cooked(c), _):
                                         .updatePost(.cooked(c))
                                     default:
                                         nil
