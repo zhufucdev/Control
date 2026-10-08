@@ -406,6 +406,7 @@ final class UpdateEditorViewModel: ObservableObject {
 private struct ShapeSelect: View {
     @Binding var shape: OpenAPIClient.Shape
     @Environment(\.mainSiteUrl) var mainSiteUrl
+    @Environment(\.colorScheme) var colorMode
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
@@ -422,7 +423,10 @@ private struct ShapeSelect: View {
                                     .padding(5)
                             } else {
                                 WebImage(url: URL(shape: shape, mainSiteUrl: mainSiteUrl)) { image in
-                                    image.resizable().aspectRatio(contentMode: .fit)
+                                    let color: Color = if colorMode == .dark { .white } else { .black }
+                                    image.resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .colorMultiply(color)
                                 } placeholder: {
                                     ProgressView()
                                 }
