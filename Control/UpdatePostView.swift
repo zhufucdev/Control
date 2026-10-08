@@ -46,12 +46,12 @@ struct UpdatePostView: View {
         .onAppear {
             viewModel.editor.copyFrom(model: model)
         }
-        .onChange(of: model, { _, newValue in
+        .onChange(of: model) { _, newValue in
             viewModel.editor.copyFrom(model: newValue)
-        })
-        .onChange(of: id, { _, _ in
+        }
+        .onChange(of: id) { _, _ in
             viewModel.editor.copyFrom(model: model)
-        })
+        }
     }
 }
 
@@ -314,7 +314,7 @@ final class UpdateEditorViewModel: ObservableObject {
         }
     }
 
-    @Published var altTextEditingChannel: AsyncChannel<Optional<String>>? = nil
+    @Published var altTextEditingChannel: AsyncChannel<String?>? = nil
 
     @Published var locale: SupportedLocale = .en {
         didSet {
@@ -373,7 +373,7 @@ final class UpdateEditorViewModel: ObservableObject {
     }
 
     private func ensureAltText() async -> Bool {
-        let channel = AsyncChannel<Optional<String>>()
+        let channel = AsyncChannel<String?>()
         altTextEditingChannel = channel
         isEditingAltText = true
         for await altText in channel {
@@ -403,7 +403,7 @@ final class UpdateEditorViewModel: ObservableObject {
     }
 }
 
-fileprivate struct ShapeSelect: View {
+private struct ShapeSelect: View {
     @Binding var shape: OpenAPIClient.Shape
     @Environment(\.mainSiteUrl) var mainSiteUrl
     var body: some View {
@@ -441,7 +441,7 @@ fileprivate struct ShapeSelect: View {
     }
 }
 
-fileprivate struct UpdatePostPreview: View {
+private struct UpdatePostPreview: View {
     @Environment(\.mainSiteUrl) var mainSiteUrl
     @EnvironmentObject var templateCache: TemplateCache
 
@@ -481,7 +481,21 @@ fileprivate struct UpdatePostPreview: View {
         .task(id: editor.edition) {
             state = nil
             do {
-                let data = if let t = templateCache.source { t } else { try await DefaultAPI.updateTemplateGet() }
+                let data = if let t = templateCache.source { t } else {
+                    try await {
+                        let (data, res) = try await URLSession.shared.data(for: .init(url: URL(string: mainSiteUrl)!.appending(component: "update-template")))
+                        let encoding = if let name = res.textEncodingName, let encoding = String.Encoding(ianaName: name) {
+                            encoding
+                        } else {
+                            String.Encoding.utf8
+                        }
+                        return String(data: data, encoding: encoding)
+                    }()
+                }
+                guard let data else {
+                    print("UpdatePostPreview, task, empty data")
+                    return
+                }
                 templateCache.source = data
 
                 let processedData = try preprocessHtml(content: data)
@@ -504,9 +518,9 @@ fileprivate struct UpdatePostPreview: View {
                 #if DEBUG
                     page.isInspectable = true
                 #endif
-                
+
                 state = .success(page)
-                
+
                 for try await event in page.navigations {
                     switch event {
                     case .finished:
@@ -533,7 +547,7 @@ fileprivate struct UpdatePostPreview: View {
             }
         }
     }
-    
+
     private func updateWebContainerHeight() async {
         guard case let .success(page) = state else {
             print("Ignoring DOM side page update because state is not ready")
@@ -573,7 +587,6 @@ class TemplateCache: ObservableObject {
 
 #Preview {
     NavigationStack {
-        UpdatePostView(model: .init(), id: 0) {
-        }
+        UpdatePostView(model: .init(), id: 0) {}
     }
 }
