@@ -238,12 +238,10 @@ private struct TranslatingPage<Service: ChatCompletion & Sendable>: View {
 
     func translate() async throws {
         for targetLocale in targetLocales {
-            if drafts.contains(where: { $0.cookedLocale == targetLocale }) {
-                // already translated
-                continue
-            }
             currentTargetLocale = targetLocale
-            if drafts.last?.isCooked != false {
+            if let last = drafts.last, last.isCooked, last.rawLocale != targetLocale {
+                drafts.append(translating)
+            } else if drafts.last == nil {
                 drafts.append(translating)
             }
             iteration: while true {
