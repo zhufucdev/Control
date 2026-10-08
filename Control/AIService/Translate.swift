@@ -55,7 +55,7 @@ enum MaybeCooked<Raw, Cooked> {
 
 extension [Translating]: Translatable {
     func translateTo(_ targetLocale: OpenAPIClient.SupportedLocale, service: some ChatCompletion) async throws -> Self {
-        iteration: while true {
+        iteration: for _ in 0 ... 5 {
             var prompt: [ChatMessage] =
                 [.system(PromptBoundary.instructions)] + flatMap {
                     switch $0 {
@@ -112,7 +112,7 @@ extension [Translating]: Translatable {
                 translated.summary = summary
                 translated.title = title
                 return dropLast() + [.updatePost(.cooked(Change(before: translating, after: translated)))]
-                
+
             case let .updatePostHeader(post: .raw(translating), existingHeaders):
                 #if DEBUG
                     print("translating, updatePostHeader, model response: \(response)")
@@ -121,7 +121,7 @@ extension [Translating]: Translatable {
                 if header.isEmpty {
                     prompt.append(contentsOf: [
                         .assistant([.text(response)]),
-                        .user([.text("Empty response. Retry.")])
+                        .user([.text("Empty response. Retry.")]),
                     ])
                     continue iteration
                 }
@@ -129,10 +129,23 @@ extension [Translating]: Translatable {
                 translated.header = header
                 translated.locale = targetLocale
                 return dropLast() + [.updatePostHeader(post: .cooked(Change(before: translating, after: translated)), existingHeaders: existingHeaders)]
+
             default:
                 print("translateTo, nothing to translate, ignoring")
                 return self
             }
+        }
+        throw TranslationError.maxRetryReached
+    }
+}
+
+enum TranslationError: LocalizedError {
+    case maxRetryReached
+    
+    var errorDescription: String? {
+        switch self {
+        case .maxRetryReached:
+            String(localized: "Reached max retrials.")
         }
     }
 }

@@ -10,7 +10,7 @@ struct TranslationSheetContent: View {
         case start, translating, review
     }
 
-    @State private var state: State = .start
+    @State private var path: [State] = []
     @State private var targetLocales = Set<SupportedLocale>()
     @State private var drafts: [Translating] = []
     @State private var translationFinished = false
@@ -21,90 +21,81 @@ struct TranslationSheetContent: View {
     let onSubmit: ([Translating]) -> Void
 
     var body: some View {
-        NavigationStack {
-            Group {
-                switch state {
-                case .start:
-                    StartPage(source: translating.rawLocale, target: $targetLocales)
-                        .toolbar {
-                            ToolbarItem(placement: .cancellationAction) {
-                                Button("Close", systemImage: "xmark") {
-                                    dismiss()
-                                }
-                            }
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Next", systemImage: "arrow.forward") {
-                                    withAnimation {
-                                        state = .translating
-                                    }
-                                }
-                                .disabled(targetLocales.isEmpty)
-                            }
-                        }
-                case .translating:
-                    TranslatingPage(
-                        translating: translating,
-                        targetLocales: SupportedLocale.allCases.filter { targetLocales.contains($0) },
-                        service: OpenAIService.shared,
-                        drafts: $drafts,
-                        done: $translationFinished
-                    )
-                    .toolbar {
+        NavigationStack(path: $path) {
+            StartPage(source: translating.rawLocale, target: $targetLocales)
+                .toolbar {
+                    if path.isEmpty {
                         ToolbarItem(placement: .cancellationAction) {
-                            Button("Previous", systemImage: "arrow.backward") {
-                                state = .start
-                            }
-                        }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Next", systemImage: "arrow.forward") {
-                                withAnimation {
-                                    state = .review
-                                }
-                            }
-                            .disabled(!translationFinished)
-                        }
-                    }
-                case .review:
-                    ReviewPage(data: submissions, onEdit: { newDraft in
-                        let index = drafts.firstIndex(where: {
-                            switch $0 {
-                            case let .updatePostHeader(.cooked(c), _):
-                                if case let .updatePostHeader(.cooked(c_), _) = newDraft {
-                                    return c.after == c_.before
-                                }
-                            default:
-                                break
-                            }
-                            return false
-                        })
-                        if let index {
-                            drafts[index] = newDraft
-                        }
-                    })
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Previous", systemImage: "arrow.backward") {
-                                state = .translating
-                            }
-                        }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Submit", systemImage: "checkmark") {
-                                onSubmit(drafts.compactMap {
-                                    switch $0 {
-                                    case let .updatePostHeader(.cooked(c), _):
-                                        .updatePost(.cooked(c))
-                                    default:
-                                        nil
-                                    }
-                                })
+                            Button("Close", systemImage: "xmark") {
                                 dismiss()
                             }
                         }
                     }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Next", systemImage: "arrow.forward") {
+                            path.append(.translating)
+                        }
+                        .disabled(targetLocales.isEmpty)
+                    }
                 }
-            }
-            .animation(.easeInOut, value: state)
-            .navigationTitle("Translate")
+                .navigationDestination(for: State.self) { state in
+                    Group {
+                        switch state {
+                        case .start:
+                            EmptyView()
+                        case .translating:
+                            TranslatingPage(
+                                translating: translating,
+                                targetLocales: SupportedLocale.allCases.filter { targetLocales.contains($0) },
+                                service: OpenAIService.shared,
+                                drafts: $drafts,
+                                done: $translationFinished
+                            )
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Next", systemImage: "arrow.forward") {
+                                        self.path.append(.review)
+                                    }
+                                    .disabled(!translationFinished)
+                                }
+                            }
+                        case .review:
+                            ReviewPage(data: submissions, onEdit: { newDraft in
+                                let index = drafts.firstIndex(where: {
+                                    switch $0 {
+                                    case let .updatePostHeader(.cooked(c), _):
+                                        if case let .updatePostHeader(.cooked(c_), _) = newDraft {
+                                            return c.after == c_.before
+                                        }
+                                    default:
+                                        break
+                                    }
+                                    return false
+                                })
+                                if let index {
+                                    drafts[index] = newDraft
+                                }
+                            })
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Submit", systemImage: "checkmark") {
+                                        onSubmit(drafts.compactMap {
+                                            switch $0 {
+                                            case let .updatePostHeader(.cooked(c), _):
+                                                .updatePost(.cooked(c))
+                                            default:
+                                                nil
+                                            }
+                                        })
+                                        dismiss()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                .animation(.easeInOut, value: path)
+                .navigationTitle("Translate")
         }
     }
 
@@ -257,9 +248,7 @@ private struct TranslatingPage<Service: ChatCompletion & Sendable>: View {
             }
             iteration: while true {
                 let drafts = self.drafts
-                var newDrafts = try await Task.detached {
-                    try await drafts.translateTo(targetLocale, service: broadcast)
-                }.value
+                var newDrafts = try await drafts.translateTo(targetLocale, service: broadcast)
                 switch drafts.last {
                 case .updatePost(.raw):
                     let existingHeaders = try await DefaultAPI.stringsByLocaleLocaleGet(locale: targetLocale.rawValue)
@@ -396,19 +385,21 @@ private struct ReviewPage: View {
         }
         .formStyle(.grouped)
         .sheet(item: $editing) { draft in
-            switch draft {
-            case let .updatePost(.cooked(change)):
-                UpdatePostSheetContent(model: change.after, onSave: { newModel in
-                    onEdit(.updatePost(.cooked(.init(before: change.before, after: newModel))))
-                    editing = nil
-                })
-            case let .updatePostHeader(.cooked(change), h):
-                UpdatePostSheetContent(model: change.after, onSave: { newModel in
-                    onEdit(.updatePostHeader(post: .cooked(.init(before: change.before, after: newModel)), existingHeaders: h))
-                    editing = nil
-                })
-            default:
-                Text("Not implemented")
+            NavigationStack {
+                switch draft {
+                case let .updatePost(.cooked(change)):
+                    UpdatePostSheetContent(model: change.after, onSave: { newModel in
+                        onEdit(.updatePost(.cooked(.init(before: change.before, after: newModel))))
+                        editing = nil
+                    })
+                case let .updatePostHeader(.cooked(change), h):
+                    UpdatePostSheetContent(model: change.after, onSave: { newModel in
+                        onEdit(.updatePostHeader(post: .cooked(.init(before: change.before, after: newModel)), existingHeaders: h))
+                        editing = nil
+                    })
+                default:
+                    Text("Not implemented")
+                }
             }
         }
     }
