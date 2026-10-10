@@ -3,9 +3,9 @@ import ImageIO
 import UniformTypeIdentifiers
 
 extension Data {
-    init(cgImage: CGImage) throws(CGImageIOError) {
+    init(cgImage: CGImage, type: UTType = .jpeg) throws(CGImageIOError) {
         guard let buffer = CFDataCreateMutable(nil, cgImage.bytesPerRow * cgImage.height) else { throw CGImageIOError(kind: .buffer) }
-        guard let dest = CGImageDestinationCreateWithData(buffer, UTType.jpeg.identifier as CFString, 1, nil) else { throw CGImageIOError(kind: .conversion) }
+        guard let dest = CGImageDestinationCreateWithData(buffer, type.identifier as CFString, 1, nil) else { throw CGImageIOError(kind: .conversion) }
         CGImageDestinationAddImage(dest, cgImage, nil)
         if !CGImageDestinationFinalize(dest) {
             throw CGImageIOError(kind: .finalization)

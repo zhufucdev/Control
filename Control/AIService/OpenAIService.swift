@@ -46,9 +46,9 @@ class OpenAIService: ChatCompletion {
             .values
             .compactMap { result in
                 switch result {
-                case .success(let chunk):
+                case let .success(chunk):
                     return mapToAssistantMessagePart(from: chunk, choiceIndex: 0)
-                case .failure(let err):
+                case let .failure(err):
                     throw err
                 }
             }
@@ -72,8 +72,10 @@ private func mapToAPIMessage(from: ChatMessage) -> ChatQuery.ChatCompletionMessa
     case let .user(array):
         return .user(.init(content: .contentParts(array.map {
             switch $0 {
-            case let .image(data, mime):
+            case let .imageData(data, mime):
                 .image(.init(imageUrl: .init(url: "data:\(mime);base64,\(data.base64EncodedString())", detail: .auto)))
+            case let .imageURL(url):
+                .image(.init(imageUrl: .init(url: url.absoluteString, detail: .auto)))
             case let .text(string):
                 .text(.init(text: string))
             }

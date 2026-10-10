@@ -7,6 +7,9 @@
     "%@ Please adjust the fields and try again" : {
 
     },
+    "Add alt text" : {
+
+    },
     "Add Item" : {
 
     },
@@ -19,10 +22,16 @@
     "Attachment" : {
 
     },
+    "Attachment data is invalid" : {
+
+    },
     "Authorization token" : {
 
     },
     "Backend" : {
+
+    },
+    "Cancel" : {
 
     },
     "Chinese (Simplified)" : {
@@ -112,6 +121,12 @@
     "Gallery" : {
 
     },
+    "Generate" : {
+
+    },
+    "Generation failed" : {
+
+    },
     "Global" : {
 
     },
@@ -154,13 +169,13 @@
     "No content" : {
 
     },
-    "No suitable conversion found from PhotosPickerItem to DataUrl" : {
-
-    },
     "Not implemented" : {
 
     },
     "Not supported" : {
+
+    },
+    "OK" : {
 
     },
     "OpenAI API endpoint" : {
@@ -250,6 +265,12 @@
     "Tweet" : {
 
     },
+    "Unable to create a internal copy of this data" : {
+
+    },
+    "Unable to load image content" : {
+
+    },
     "Unlock" : {
 
     },
@@ -260,6 +281,9 @@
 
     },
     "Uploading image..." : {
+
+    },
+    "Waiting for initial output..." : {
 
     },
     "What's up?" : {

@@ -182,7 +182,7 @@ struct GalleryTabView: View {
     }
 }
 
-fileprivate struct CachedGalleryItemView: View {
+private struct CachedGalleryItemView: View {
     @State private var previewURL: URL? = nil
 
     let item: CachedGalleryItem
@@ -257,16 +257,16 @@ fileprivate struct CachedGalleryItemView: View {
     }
 }
 
-fileprivate struct TweetView: View {
+private struct TweetView: View {
     @Binding var isPresented: Bool
     let post: (GalleryItem) -> Void
 
     @State private var tweetBuffer = ""
     @State private var altText = ""
-    @State private var isEditingAltText = false
+    @State private var captioning: CaptioningImage<URL>? = nil
     @State private var locale: SupportedLocale? = nil
     @State private var photoSelection: PhotosPickerItem? = nil
-    @State private var altTextChannel: AsyncChannel<Optional<String>>? = nil
+    @State private var altTextChannel: AsyncChannel<String?>? = nil
     @State private var errorAlertContent: String? = nil
 
     var body: some View {
@@ -313,7 +313,7 @@ fileprivate struct TweetView: View {
                         }
                     #endif
                 }
-                .altTextAlert(isPresented: $isEditingAltText, initialText: altText) { newValue in
+                .altTextAlert(initialText: altText, captioning: $captioning, updateText: { newValue in
                     if let altTextChannel {
                         Task {
                             await altTextChannel.send(.some(newValue))
@@ -321,13 +321,13 @@ fileprivate struct TweetView: View {
                     } else {
                         altText = newValue
                     }
-                } onCancel: {
+                }, onCancel: {
                     if let altTextChannel {
                         Task {
                             await altTextChannel.send(.none)
                         }
                     }
-                }
+                })
                 .alert("Post failed", isPresented: Binding(get: {
                     errorAlertContent != nil
                 }, set: { shown in
@@ -341,6 +341,25 @@ fileprivate struct TweetView: View {
                 } message: { msg in
                     Text(msg)
                 }
+        }
+    }
+
+    private var generateCaption: (() async throws -> String)? {
+        if let photoSelection {
+            {
+                let file = try await getTweetImageURL(photoSelection: photoSelection, stripExif: true)
+                let image = CIImage(contentsOf: file)!
+                do {
+                    let caption = try await image.getCaption(service: OpenAIService.shared)
+                    try? FileManager.default.removeItem(at: file)
+                    return caption
+                } catch {
+                    try? FileManager.default.removeItem(at: file)
+                    throw error
+                }
+            }
+        } else {
+            nil
         }
     }
 
@@ -367,48 +386,42 @@ fileprivate struct TweetView: View {
         }
         .disabled(photoSelection == nil)
     }
-
-    private func postButtonClicked(stripExif: Bool) async {
-        guard let photoSelection else { return }
-
+    
+    private func ensureAltText(stripExif: Bool) async throws -> URL? {
+        guard let photoSelection else {
+            return nil
+        }
+        let imageURL = try await getTweetImageURL(photoSelection: photoSelection, stripExif: stripExif)
         if altText.isEmpty {
-            let channel = AsyncChannel<Optional<String>>()
+            let channel = AsyncChannel<String?>()
             altTextChannel = channel
-            isEditingAltText = true
+            captioning = .init(id: imageURL, image: CIImage(contentsOf: imageURL)!)
             for await alt in channel {
                 channel.finish()
                 if let alt {
                     altText = alt
                     break
                 } else {
-                    return
+                    return nil
                 }
             }
         }
-
-        guard let image = try? await photoSelection.loadTransferable(type: DataUrl.self) else {
-            errorAlertContent = String(localized: "No suitable conversion found from PhotosPickerItem to DataUrl")
+        return imageURL
+    }
+    
+    private func postButtonClicked(stripExif: Bool) async {
+        do {
+            guard let imageURL = try await ensureAltText(stripExif: stripExif) else {
+                return
+            }
+            
+            post(.init(id: -1, locale: locale, tweet: tweetBuffer, image: imageURL.absoluteString, created: .now, alt: altText, trashed: false))
+        } catch {
+            errorAlertContent = error.localizedDescription
             return
         }
-
-        if stripExif {
-            guard let imageData = try? Data(contentsOf: image.url) else {
-                errorAlertContent = String(localized: "Image read failed")
-                return
-            }
-            guard let stripped = imageData.removingEXIF() else {
-                errorAlertContent = String(localized: "EXIF removal failed")
-                return
-            }
-            do {
-                try stripped.write(to: image.url)
-            } catch {
-                errorAlertContent = String(localized: "Could not rewrite EXIF-stripped image: \(error.localizedDescription)")
-            }
-        }
-
+        
         isPresented = false
-        post(.init(id: -1, locale: locale, tweet: tweetBuffer, image: image.url.absoluteString, created: .now, alt: altText, trashed: false))
     }
 
     private var metadataToolbarItems: some View {
@@ -432,8 +445,29 @@ fileprivate struct TweetView: View {
                 }))
             }
             Button("Alternative text", systemImage: "text.below.photo") {
-                isEditingAltText = true
+                Task {
+                    do {
+                        _ = try await ensureAltText(stripExif: true)
+                    } catch {
+                        errorAlertContent = error.localizedDescription
+                    }
+                }
             }
+        }
+    }
+}
+
+enum GetTweetImageError: LocalizedError {
+    case imageRead, exifRemoval, imageWrite(any Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .imageRead:
+            String(localized: "Image read failed")
+        case .exifRemoval:
+            String(localized: "EXIF removal failed")
+        case let .imageWrite(error):
+            String(localized: "Could not rewrite EXIF-stripped image: \(error.localizedDescription)")
         }
     }
 }

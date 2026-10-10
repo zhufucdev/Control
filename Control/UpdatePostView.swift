@@ -184,14 +184,18 @@ struct UpdatePostEditor: View {
             preferredItemEncoding: .automatic,
             photoLibrary: .shared()
         )
-        .altTextAlert(isPresented: $editor.isEditingAltText, initialText: editor.alt, updateText: { newValue in
+        .altTextAlert(initialText: editor.alt, captioning: $editor.captioning) { newValue in
             Task {
                 await editor.altTextEditingChannel?.send(newValue)
             }
-        })
+        } onCancel: {
+            Task {
+                await editor.altTextEditingChannel?.send(nil)
+            }
+        }
         .frame(maxHeight: .infinity, alignment: .top)
     }
-
+    
     private func onSaveButtonClicked(coverMetadata: ImageMetadataHandling) {
         #if os(iOS)
             // hide keyboard
@@ -284,12 +288,9 @@ final class UpdateEditorViewModel: ObservableObject {
             if let photoSelection {
                 Task {
                     do {
-                        if let image = try await photoSelection.loadTransferable(type: DataUrl.self) {
-                            if await ensureAltText() {
-                                cover = image.url
-                            }
-                        } else {
-                            print("No suitable conversion found from PhotosPickerItem to DataUrl")
+                        let image = try await getTweetImageURL(photoSelection: photoSelection, stripExif: true)
+                        if await ensureAltText(captioning: .init(id: image.absoluteString, image: CIImage(contentsOf: image)!)) {
+                            cover = image
                         }
                     } catch {
                         print("Error loading photo selection: \(error)")
@@ -314,6 +315,7 @@ final class UpdateEditorViewModel: ObservableObject {
         }
     }
 
+    @Published var captioning: CaptioningImage<String>? = nil
     @Published var altTextEditingChannel: AsyncChannel<String?>? = nil
 
     @Published var locale: SupportedLocale = .en {
@@ -321,8 +323,6 @@ final class UpdateEditorViewModel: ObservableObject {
             notifyEditing()
         }
     }
-
-    @Published var isEditingAltText = false
 
     func notifyEditing() {
         if !isCopying {
@@ -372,10 +372,10 @@ final class UpdateEditorViewModel: ObservableObject {
         }
     }
 
-    private func ensureAltText() async -> Bool {
+    private func ensureAltText(captioning image: CaptioningImage<String>) async -> Bool {
         let channel = AsyncChannel<String?>()
         altTextEditingChannel = channel
-        isEditingAltText = true
+        captioning = image
         for await altText in channel {
             channel.finish()
             if let altText {
@@ -389,7 +389,10 @@ final class UpdateEditorViewModel: ObservableObject {
     }
 
     func attachImage(filename: String, data: Data) async throws {
-        if await ensureAltText() {
+        guard let image = CIImage(data: data) else {
+            throw AttachImageError.invalidData
+        }
+        if await ensureAltText(captioning: .init(id: filename, image: image)) {
             let resultingFile = try await getUniqueDocumentURL(filename: filename)
             try data.write(to: resultingFile)
             cover = resultingFile
@@ -400,6 +403,13 @@ final class UpdateEditorViewModel: ObservableObject {
         cover = nil
         alt = ""
         photoSelection = nil
+    }
+}
+
+fileprivate enum AttachImageError: LocalizedError {
+    case invalidData
+    var errorDescription: String? {
+        String(localized: "Attachment data is invalid")
     }
 }
 

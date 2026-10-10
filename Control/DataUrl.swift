@@ -24,3 +24,14 @@ struct DataUrl: Transferable {
         }
     }
 }
+
+enum DataUrlError: LocalizedError {
+    case noSuitableConversion
+    
+    var errorDescription: String? {
+        switch self {
+        case .noSuitableConversion:
+            String(localized: "Unable to create a internal copy of this data")
+        }
+    }
+}

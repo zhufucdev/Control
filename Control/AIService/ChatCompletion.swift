@@ -38,7 +38,7 @@ enum ChatMessage {
 }
 
 enum UserMessagePart {
-    case text(String), image(data: Data, mime: String)
+    case text(String), imageData(data: Data, mime: String), imageURL(URL)
 }
 
 enum AssistantMessagePart {
