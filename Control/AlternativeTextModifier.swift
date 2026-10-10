@@ -88,6 +88,7 @@ private struct AltTextSheetContent<Service: ChatCompletion & Sendable>: View {
                     .progressViewStyle(.circular)
             } else {
                 Button("Generate", systemImage: "wand.and.sparkles") {
+                    response = ""
                     isGenerating = true
                 }
             }
