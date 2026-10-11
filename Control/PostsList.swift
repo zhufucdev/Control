@@ -63,7 +63,7 @@ struct PostsList: View {
             .toolbar {
                 #if os(iOS)
                     if showCrudToolbarItems {
-                        ToolbarItemGroup(placement: .bottomBar) {
+                        ToolbarItemGroup {
                             Button(role: .destructive) {
                                 trashItems(items.filter { selection.contains($0.persistentModelID) })
                                 deleteItems(trashedItems.filter { selection.contains($0.persistentModelID) })
